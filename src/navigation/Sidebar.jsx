@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Car, List, Users, FileText, Wrench, History, ChevronDown, ChevronRight, LayoutDashboard, RefreshCw, Tv, Package } from 'lucide-react';
+import { Car, List, Users, FileText, Wrench, History, ChevronDown, ChevronRight, LayoutDashboard, RefreshCw, Tv, Package, PanelLeft, TrendingUp, User } from 'lucide-react';
 
 export default function Sidebar({
   isSidebarCollapsed,
+  setIsSidebarCollapsed,
   activeTab,
   setActiveTab,
   currentUserRole,
@@ -37,7 +38,7 @@ export default function Sidebar({
     if (tabKey === 'drh-dashboard') {
       setIsDrhOpen(true);
       setIsWabOpen(false);
-    } else if (tabKey === 'tv-display' || tabKey === 'sparepart') {
+    } else if (tabKey === 'sparepart') {
       setIsWabOpen(false);
       setIsDrhOpen(false);
     } else {
@@ -48,84 +49,136 @@ export default function Sidebar({
 
   const isEffectiveCollapsed = isSidebarCollapsed && !isHovered;
 
+  const isWabTab = ['bookings', 'daftar-tamu', 'wab-form', 'foreman', 'rka', 'tv-display', 'history'].includes(activeTab);
+  const isDrhTab = ['drh-dashboard'].includes(activeTab);
+
+  const isWabParentActive = isEffectiveCollapsed && isWabTab;
+  const isDrhParentActive = isEffectiveCollapsed && isDrhTab;
+
   return (
     <aside
       className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isSidebarCollapsed && isHovered ? 'hover-expanded' : ''}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => isSidebarCollapsed && setIsHovered(true)}
+      onMouseLeave={() => isSidebarCollapsed && setIsHovered(false)}
     >
-      <div className="sidebar-brand">
-        <img
-          src={isEffectiveCollapsed ? "/s_logo.svg" : "/suzuki_logo.svg"}
-          alt="Suzuki Logo"
-          style={{ height: '32px', objectFit: 'contain' }}
-        />
-      </div>
-
-      <div className="sidebar-section-title">Modul Servis &amp; Bengkel</div>
-
       <div
-        className={`sidebar-nav-item ${isWabOpen ? 'active' : ''}`}
-        onClick={handleToggleWab}
-        style={{ cursor: 'pointer' }}
-        title="WAB System"
+        className="sidebar-brand"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: isEffectiveCollapsed ? 'center' : 'space-between',
+          width: '100%',
+          padding: isEffectiveCollapsed ? '0' : '0 0.65rem 0 1.25rem',
+          boxSizing: 'border-box'
+        }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <Car size={17} color="#0f172a" />
-          <span className="sidebar-label-text" style={{ fontWeight: 700 }}>WAB System</span>
-        </div>
-        <span className="sidebar-arrow" style={{ fontSize: '0.75rem', color: '#64748b' }}>
-          {isWabOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        </span>
+        <img
+          src={isEffectiveCollapsed ? "/assets/logos/s_logo.svg" : "/assets/logos/suzuki_logo.svg"}
+          alt="Suzuki Logo"
+          style={{ height: isEffectiveCollapsed ? '36px' : '48px', objectFit: 'contain', flexShrink: 0 }}
+        />
+        {setIsSidebarCollapsed && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsSidebarCollapsed(!isSidebarCollapsed);
+            }}
+            title={isSidebarCollapsed ? "Sematkan Sidebar" : "Tutup Sidebar"}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: '0.35rem',
+              cursor: 'pointer',
+              color: '#0f172a',
+              display: isEffectiveCollapsed ? 'none' : 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              outline: 'none',
+              borderRadius: '6px',
+              marginLeft: 'auto',
+              flexShrink: 0
+            }}
+          >
+            <PanelLeft size={18} color="#0f172a" />
+          </button>
+        )}
       </div>
 
-      {isWabOpen && (
-        <div className="sidebar-sub-nav">
+      <div>
+        <div
+          className={`sidebar-nav-item ${isWabParentActive ? 'active' : ''}`}
+          onClick={handleToggleWab}
+          style={{ cursor: 'pointer' }}
+          title="WAB System"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Car size={17} color="#0f172a" />
+            <span className="sidebar-label-text" style={{ fontWeight: 700 }}>WAB System</span>
+          </div>
+          <span className="sidebar-arrow" style={{ fontSize: '0.75rem', color: '#64748b' }}>
+            {isWabOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </span>
+        </div>
+
+        <div className={`sidebar-sub-nav ${isWabOpen && !isEffectiveCollapsed ? 'open' : ''}`}>
           {(currentUserRole === 'Security' || currentUserRole === 'Admin') && (
             <div className={`sidebar-sub-item ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => handleSelectTab('bookings')} title="List Booking">
-              <List size={15} color="#0f172a" />
-              <span className="sidebar-label-text" style={{ marginLeft: '0.5rem' }}>List Booking</span>
+              <List size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'bookings' ? 1 : 0.6, flexShrink: 0 }} />
+              <span className="sidebar-label-text">List Booking</span>
               <span className="sidebar-count-badge" style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.7 }}>({bookingsCount})</span>
             </div>
           )}
 
           {(currentUserRole === 'Security' || currentUserRole === 'ServiceAdvisor' || currentUserRole === 'Admin') && (
             <div className={`sidebar-sub-item ${activeTab === 'daftar-tamu' ? 'active' : ''}`} onClick={() => handleSelectTab('daftar-tamu')} title="Daftar Tamu">
-              <Users size={15} color="#0f172a" />
-              <span className="sidebar-label-text" style={{ marginLeft: '0.5rem' }}>Daftar Tamu</span>
+              <Users size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'daftar-tamu' ? 1 : 0.6, flexShrink: 0 }} />
+              <span className="sidebar-label-text">Daftar Tamu</span>
               <span className="sidebar-count-badge" style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.7 }}>({ticketsCount})</span>
             </div>
           )}
 
           {(currentUserRole === 'ServiceAdvisor' || currentUserRole === 'Admin') && (
             <div className={`sidebar-sub-item ${activeTab === 'wab-form' ? 'active' : ''}`} onClick={() => handleSelectTab('wab-form')} title="Form WAB">
-              <FileText size={15} color="#0f172a" />
-              <span className="sidebar-label-text" style={{ marginLeft: '0.5rem' }}>Form WAB</span>
+              <FileText size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'wab-form' ? 1 : 0.6, flexShrink: 0 }} />
+              <span className="sidebar-label-text">Form WAB</span>
             </div>
           )}
 
           {(currentUserRole === 'Foreman' || currentUserRole === 'Admin') && (
             <div className={`sidebar-sub-item ${activeTab === 'foreman' ? 'active' : ''}`} onClick={() => handleSelectTab('foreman')} title="Workshop Board">
-              <Wrench size={15} color="#0f172a" />
-              <span className="sidebar-label-text" style={{ marginLeft: '0.5rem' }}>Workshop Board</span>
+              <Wrench size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'foreman' ? 1 : 0.6, flexShrink: 0 }} />
+              <span className="sidebar-label-text">Workshop Board</span>
             </div>
           )}
 
+          {(currentUserRole === 'CCM' || currentUserRole === 'Admin') && (
+            <div className={`sidebar-sub-item ${activeTab === 'rka' ? 'active' : ''}`} onClick={() => handleSelectTab('rka')} title="RKA Monitoring">
+              <TrendingUp size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'rka' ? 1 : 0.6, flexShrink: 0 }} />
+              <span className="sidebar-label-text">RKA Monitoring</span>
+            </div>
+          )}
+
+          <div className={`sidebar-sub-item ${activeTab === 'tv-display' ? 'active' : ''}`} onClick={() => handleSelectTab('tv-display')} title="TV Display Lounge">
+            <Tv size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'tv-display' ? 1 : 0.6, flexShrink: 0 }} />
+            <span className="sidebar-label-text">TV Display Lounge</span>
+          </div>
+
           <div className={`sidebar-sub-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => handleSelectTab('history')} title="Riwayat">
-            <History size={15} color="#0f172a" />
-            <span className="sidebar-label-text" style={{ marginLeft: '0.5rem' }}>
+            <History size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'history' ? 1 : 0.6, flexShrink: 0 }} />
+            <span className="sidebar-label-text">
               {currentUserRole === 'Security' ? 'Riwayat Check-Out' :
-               currentUserRole === 'ServiceAdvisor' ? 'Riwayat WAB' :
-               currentUserRole === 'Foreman' ? 'Riwayat Workshop' : 'Riwayat Sistem'}
+                currentUserRole === 'ServiceAdvisor' ? 'Riwayat WAB' :
+                  currentUserRole === 'Foreman' ? 'Riwayat Workshop' : 'Riwayat Sistem'}
             </span>
             <span className="sidebar-count-badge" style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.7 }}>({historyCount})</span>
           </div>
         </div>
-      )}
+      </div>
 
       <div style={{ marginTop: '0.25rem' }}>
         <div
-          className={`sidebar-nav-item ${isDrhOpen ? 'active' : ''}`}
+          className={`sidebar-nav-item ${isDrhParentActive ? 'active' : ''}`}
           onClick={handleToggleDrh}
           style={{ cursor: 'pointer' }}
           title="DRH System"
@@ -139,27 +192,11 @@ export default function Sidebar({
           </span>
         </div>
 
-        {isDrhOpen && (
-          <div className="sidebar-sub-nav">
-            <div className={`sidebar-sub-item ${activeTab === 'drh-dashboard' ? 'active' : ''}`} onClick={() => handleSelectTab('drh-dashboard')} title="Dashboard">
-              <LayoutDashboard size={15} color="#0f172a" />
-              <span className="sidebar-label-text" style={{ marginLeft: '0.5rem' }}>Dashboard</span>
-            </div>
+        <div className={`sidebar-sub-nav ${isDrhOpen && !isEffectiveCollapsed ? 'open' : ''}`}>
+          <div className={`sidebar-sub-item ${activeTab === 'drh-dashboard' ? 'active' : ''}`} onClick={() => handleSelectTab('drh-dashboard')} title="Dashboard">
+            <LayoutDashboard size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'drh-dashboard' ? 1 : 0.6, flexShrink: 0 }} />
+            <span className="sidebar-label-text">Dashboard</span>
           </div>
-        )}
-      </div>
-
-      <div className="sidebar-section-title" style={{ marginTop: '1rem' }}>Modul Tambahan</div>
-
-      <div
-        className={`sidebar-nav-item ${activeTab === 'tv-display' ? 'active' : ''}`}
-        onClick={() => handleSelectTab('tv-display')}
-        style={{ cursor: 'pointer' }}
-        title="TV Display Lounge"
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <Tv size={17} color="#0f172a" />
-          <span className="sidebar-label-text" style={{ fontWeight: 700 }}>TV Display Lounge</span>
         </div>
       </div>
 

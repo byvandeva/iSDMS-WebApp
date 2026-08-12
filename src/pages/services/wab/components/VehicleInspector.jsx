@@ -22,7 +22,7 @@ export default function VehicleInspector({ onPartClick, damages = [], focusFrame
   const images = useMemo(() => {
     return Array.from({ length: TOTAL_FRAMES }).map((_, i) => {
       const padIndex = String(i + 1).padStart(2, '0');
-      return `/xl7/${padIndex}.jpg`;
+      return `/assets/360/xl7/${padIndex}.jpg`;
     });
   }, []);
 

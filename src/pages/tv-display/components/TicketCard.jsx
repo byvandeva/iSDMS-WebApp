@@ -2,11 +2,7 @@ import React from 'react';
 
 function maskLicensePlate(plate) {
   if (!plate) return '';
-  const parts = plate.trim().split(' ');
-  if (parts.length < 2) return plate;
-  const num = parts[1];
-  const maskedNum = num[0] + '*'.repeat(Math.max(1, num.length - 1));
-  return `${parts[0]} ${maskedNum} ${parts[2] || ''}`.trim();
+  return plate.trim().toUpperCase();
 }
 
 function maskCustomerName(name) {
@@ -28,21 +24,21 @@ function resolveStatus(status) {
 }
 
 function getVehicleImage(vehicleModel) {
-  if (!vehicleModel) return '/mobil_szk.png';
+  if (!vehicleModel) return '/assets/vehicles/mobil_szk.png';
   const model = vehicleModel.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (model.includes('xl7')) return '/xl7.png';
-  if (model.includes('ertiga')) return '/ertiga.png';
-  if (model.includes('baleno')) return '/baleno.png';
-  if (model.includes('jimny')) return '/jimny.png';
-  if (model.includes('ignis')) return '/ignis.png';
-  if (model.includes('grandvitara') || (model.includes('vitara') && !model.includes('evitara'))) return '/grandvitara.png';
-  if (model.includes('evitara')) return '/evitara.png';
-  if (model.includes('fronx')) return '/fronx.png';
-  if (model.includes('scross') || model.includes('sx4')) return '/scross.png';
-  if (model.includes('spresso') || model.includes('presso')) return '/s-presso.png';
-  if (model.includes('apv')) return '/apv.png';
-  if (model.includes('carry')) return '/carry.png';
-  return '/mobil_szk.png';
+  if (model.includes('xl7')) return '/assets/vehicles/xl7.png';
+  if (model.includes('ertiga')) return '/assets/vehicles/ertiga.png';
+  if (model.includes('baleno')) return '/assets/vehicles/baleno.png';
+  if (model.includes('jimny')) return '/assets/vehicles/jimny.png';
+  if (model.includes('ignis')) return '/assets/vehicles/ignis.png';
+  if (model.includes('grandvitara') || (model.includes('vitara') && !model.includes('evitara'))) return '/assets/vehicles/grandvitara.png';
+  if (model.includes('evitara')) return '/assets/vehicles/evitara.png';
+  if (model.includes('fronx')) return '/assets/vehicles/fronx.png';
+  if (model.includes('scross') || model.includes('sx4')) return '/assets/vehicles/scross.png';
+  if (model.includes('spresso') || model.includes('presso')) return '/assets/vehicles/s-presso.png';
+  if (model.includes('apv')) return '/assets/vehicles/apv.png';
+  if (model.includes('carry')) return '/assets/vehicles/carry.png';
+  return '/assets/vehicles/mobil_szk.png';
 }
 
 const TIME_SLOTS = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
@@ -52,6 +48,35 @@ function getHourSlot(checkInTime) {
   const hour = new Date(checkInTime).getHours();
   const formatted = `${hour.toString().padStart(2, '0')}:00`;
   return TIME_SLOTS.includes(formatted) ? formatted : '08:00';
+}
+
+function formatFinishTime(ticket) {
+  if (ticket.saTargetFinishTime) {
+    try {
+      const date = new Date(ticket.saTargetFinishTime);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+      }
+    } catch (e) {}
+  }
+  if (ticket.finishJobTime || ticket.finishTime) {
+    try {
+      const date = new Date(ticket.finishJobTime || ticket.finishTime);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+      }
+    } catch (e) {}
+  }
+  if (ticket.checkInTime) {
+    try {
+      const checkInDate = new Date(ticket.checkInTime);
+      if (!isNaN(checkInDate.getTime())) {
+        const estFinish = new Date(checkInDate.getTime() + (60 + Number(ticket.foremanExtraMinutes || 0)) * 60000);
+        return estFinish.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+      }
+    } catch (e) {}
+  }
+  return '11:30 WIB';
 }
 
 export default function TicketCard({ ticket, rowIndex, isStretch = true }) {
@@ -84,40 +109,53 @@ export default function TicketCard({ ticket, rowIndex, isStretch = true }) {
       position: 'relative',
     }}>
       <div style={{
-        padding: '0.75rem 1rem',
+        padding: '0.65rem 1rem',
         borderRight: '1px solid #e2e8f0',
         borderLeft: `4px solid ${accentColor}`,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: '0.25rem',
+        overflow: 'hidden'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
           {ticket.queueNumber && (
             <span style={{
-              background: '#0f172a', color: '#fff', padding: '2px 7px', borderRadius: '4px',
-              fontWeight: 800, fontSize: '0.8rem', fontFamily: "'Courier New', monospace",
-              letterSpacing: '0.5px',
+              background: '#eff6ff',
+              color: '#0054a6',
+              border: '1px solid #bfdbfe',
+              padding: '2px 7px',
+              borderRadius: '6px',
+              fontWeight: 800,
+              fontSize: '0.775rem',
+              fontFamily: "'Inter', sans-serif",
+              letterSpacing: '0.3px',
+              flexShrink: 0,
+              boxShadow: '0 1px 2px rgba(0, 84, 166, 0.06)'
             }}>
               {ticket.queueNumber}
             </span>
           )}
-          <span style={{ fontWeight: 700, fontSize: '1.02rem', color: '#0f172a', letterSpacing: '0.3px' }}>
-            {maskLicensePlate(ticket.licensePlate)}
+          <span style={{ fontWeight: 800, fontSize: '0.975rem', color: '#0f172a', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>
+            {(ticket.licensePlate || ticket.policeRegNo || '').toUpperCase()}
           </span>
         </div>
-        <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
-          {maskCustomerName(ticket.customerName)}
+
+        <div style={{ fontSize: '0.775rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {ticket.serviceType || ticket.jobType || 'Periodic Service'}
         </div>
-        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '1px' }}>
-          {ticket.vehicleModel} <span style={{ opacity: 0.5 }}>·</span>{' '}
-          <span style={{ fontWeight: 600, color: '#0054a6' }}>{ticket.stallName || 'Penerimaan'}</span>
+
+        <div style={{ fontSize: '0.725rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap' }}>
+          <span style={{ fontWeight: 500 }}>Janji Selesai:</span>
+          <span style={{ fontWeight: 700, color: hasExtraTime ? '#d97706' : '#0f172a' }}>
+            {formatFinishTime(ticket)}
+          </span>
+          {hasExtraTime && (
+            <span style={{ fontSize: '0.65rem', background: '#d97706', color: '#ffffff', padding: '1px 5px', borderRadius: '3px', fontWeight: 700, marginLeft: '2px' }}>
+              +{extraMins}m
+            </span>
+          )}
         </div>
-        {hasExtraTime && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '4px',
-            fontSize: '0.7rem', color: '#ffffff', fontWeight: 700,
-            marginTop: '4px', background: '#d97706', padding: '2px 7px', borderRadius: '4px',
-          }}>
-            ⏱ +{extraMins} menit tambahan
-          </div>
-        )}
       </div>
 
       <div style={{
@@ -185,7 +223,7 @@ export default function TicketCard({ ticket, rowIndex, isStretch = true }) {
                   src={getVehicleImage(ticket.vehicleModel)}
                   alt={ticket.vehicleModel || "Suzuki Vehicle"}
                   style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.12))' }}
-                  onError={e => { e.target.src = '/mobil_szk.png'; }}
+                  onError={e => { e.target.src = '/assets/vehicles/mobil_szk.png'; }}
                 />
               </div>
             )}

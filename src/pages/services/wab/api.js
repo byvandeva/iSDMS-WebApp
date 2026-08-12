@@ -1,47 +1,226 @@
 import httpClient from '../../../utility/http/httpClient';
 
+export function normalizeSdmsBooking(raw) {
+  if (!raw) return null;
+  return {
+    companyCode: raw.CompanyCode || raw.companyCode || '',
+    branchCode: raw.BranchCode || raw.branchCode || '',
+    sdmsBookingId: raw.BookingNo || raw.bookingNo || raw.sdmsBookingId || '',
+    bookingNo: raw.BookingNo || raw.bookingNo || raw.sdmsBookingId || '',
+    reservasiDate: raw.ReservasiDate || raw.reservasiDate || '',
+    reservasiTime: raw.ReservasiTime || raw.reservasiTime || raw.bookingTime || '',
+    bookingTime: raw.ReservasiTime || raw.reservasiTime || raw.bookingTime || '',
+    stallCode: raw.StallCode || raw.stallCode || '',
+    bookingSource: raw.BookingSource || raw.bookingSource || 'SDMS',
+    customerName: raw.CustomerName || raw.customerName || '',
+    customerPhone: raw.TelponNo || raw.telponNo || raw.customerPhone || '',
+    telponNo: raw.TelponNo || raw.telponNo || raw.customerPhone || '',
+    licensePlate: (raw.PoliceRegNo || raw.policeRegNo || raw.licensePlate || '').toUpperCase(),
+    policeRegNo: (raw.PoliceRegNo || raw.policeRegNo || raw.licensePlate || '').toUpperCase(),
+    vehicleModel: raw.GroupCode || raw.groupCode || raw.vehicleModel || '',
+    groupCode: raw.GroupCode || raw.groupCode || raw.vehicleModel || '',
+    odometer: raw.Odometer || raw.odometer || 0,
+    serviceType: raw.JobType || raw.jobType || raw.serviceType || 'Periodic Service',
+    jobType: raw.JobType || raw.jobType || raw.serviceType || 'Periodic Service',
+    jobTime: raw.JobTime || raw.jobTime || null,
+    additionalTime: raw.AdditionalTime ?? raw.additionalTime ?? 0,
+    finishJobTime: raw.FinishJobTime || raw.finishJobTime || null,
+    finishTime: raw.FinishTime || raw.finishTime || null,
+    serviceRequest: raw.ServiceRequest || raw.serviceRequest || '1',
+    remark: raw.Remark || raw.remark || null,
+    serviceAdvisor: raw.ServiceAdvisor || raw.serviceAdvisor || '',
+    foremanId: raw.ForemanID || raw.foremanId || null,
+    mechanicId: raw.MechanicID || raw.mechanicId || null,
+    createdBy: raw.CreatedBy || raw.createdBy || '',
+    createdDate: raw.CreatedDate || raw.createdDate || '',
+    updatedBy: raw.UpdatedBy || raw.updatedBy || '',
+    updatedDate: raw.UpdatedDate || raw.updatedDate || '',
+    arrivalPurpose: raw.arrivalPurpose || 'Service',
+    isPriorityBooking: true,
+  };
+}
+
 export async function fetchBookings() {
   try {
     const res = await httpClient.get('/bookings');
-    return res.data || res;
+    const rawList = res.data || res || [];
+    return Array.isArray(rawList) ? rawList.map(normalizeSdmsBooking) : [];
   } catch (e) {
     return [
-      { sdmsBookingId: "B-001", customerName: "Budi Santoso", arrivalPurpose: "Service", licensePlate: "B 1234 ABC", bookingTime: "09:00", categoryPassComm: "Passenger", customerPhone: "081234567890", vehicleModel: "Suzuki XL7 Alpha", serviceType: "Periodic Service 10.000 KM", isPriorityBooking: true },
-      { sdmsBookingId: "B-002", customerName: "Siti Rahma", arrivalPurpose: "Service", licensePlate: "B 5678 XYZ", bookingTime: "10:30", categoryPassComm: "Passenger", customerPhone: "089876543210", vehicleModel: "Suzuki All New Ertiga", serviceType: "General Repair", isPriorityBooking: true },
-      { sdmsBookingId: "B-003", customerName: "PT Trans Jaya", arrivalPurpose: "Service", licensePlate: "B 9999 SZK", bookingTime: "11:00", categoryPassComm: "Commercial", customerPhone: "081122334455", vehicleModel: "Suzuki Carry Pick Up", serviceType: "Periodic Service 30.000 KM", isPriorityBooking: true },
-      { sdmsBookingId: "B-004", customerName: "Rudi Hermawan", arrivalPurpose: "Service", licensePlate: "B 7777 RDI", bookingTime: "13:00", categoryPassComm: "Passenger", customerPhone: "081399887766", vehicleModel: "Suzuki Jimny 5-Door", serviceType: "General Repair", isPriorityBooking: false }
+      normalizeSdmsBooking({
+        CompanyCode: "6006406",
+        BranchCode: "6006401",
+        BookingNo: "BO401/25/002479",
+        ReservasiDate: "2026-02-26 00:00:00.000",
+        ReservasiTime: "09:30",
+        StallCode: "STALL-01",
+        BookingSource: "NEW",
+        CustomerName: "ANANTYA NALA PRABATA",
+        TelponNo: "08118207657",
+        PoliceRegNo: "B1697TYK",
+        GroupCode: "SWIFT (CBU)",
+        Odometer: "2222222",
+        JobType: "PAKET 10.000 KM",
+        JobTime: null,
+        AdditionalTime: 0,
+        FinishJobTime: null,
+        FinishTime: null,
+        ServiceRequest: "1",
+        Remark: null,
+        ServiceAdvisor: "58970",
+        ForemanID: null,
+        MechanicID: null,
+        CreatedBy: "ga",
+        CreatedDate: "2026-02-24 13:28:48.860",
+        UpdatedBy: "ga",
+        UpdatedDate: "2026-02-24 13:28:48.860"
+      }),
+      normalizeSdmsBooking({
+        CompanyCode: "6006406",
+        BranchCode: "6006401",
+        BookingNo: "BO401/25/002480",
+        ReservasiDate: "2026-02-26 00:00:00.000",
+        ReservasiTime: "10:30",
+        StallCode: "STALL-02",
+        BookingSource: "SDMS",
+        CustomerName: "Siti Rahma",
+        TelponNo: "089876543210",
+        PoliceRegNo: "B5678XYZ",
+        GroupCode: "SUZUKI ALL NEW ERTIGA HYBRID",
+        Odometer: "15000",
+        JobType: "GENERAL REPAIR",
+        ServiceAdvisor: "58970"
+      }),
+      normalizeSdmsBooking({
+        CompanyCode: "6006406",
+        BranchCode: "6006401",
+        BookingNo: "BO401/25/002481",
+        ReservasiDate: "2026-02-26 00:00:00.000",
+        ReservasiTime: "11:00",
+        StallCode: "STALL-03",
+        BookingSource: "SDMS",
+        CustomerName: "PT Trans Jaya",
+        TelponNo: "081122334455",
+        PoliceRegNo: "B9999SZK",
+        GroupCode: "SUZUKI CARRY PICK UP",
+        Odometer: "30000",
+        JobType: "PAKET 30.000 KM",
+        ServiceAdvisor: "58971"
+      })
     ];
   }
 }
 
+const MOCK_FALLBACK_TICKETS = [
+  {
+    ticketId: 't-101',
+    ticketNo: 'TICK-1001',
+    queueNumber: 'BO401/25/002479',
+    arrivalPurpose: 'Service',
+    sdmsBookingId: 'BO401/25/002479',
+    licensePlate: 'B 1697 TYK',
+    policeRegNo: 'B 1697 TYK',
+    customerName: 'ANANTYA NALA PRABATA',
+    customerPhone: '08118207657',
+    vehicleModel: 'SWIFT (CBU)',
+    groupCode: 'SWIFT (CBU)',
+    serviceType: 'PAKET 10.000 KM',
+    status: 'InService',
+    stallName: 'Stall 01',
+    checkInTime: new Date(Date.now() - 3600000).toISOString(),
+    saTargetFinishTime: new Date(Date.now() + 1800000).toISOString(),
+    foremanExtraMinutes: 0
+  },
+  {
+    ticketId: 't-102',
+    ticketNo: 'TICK-1002',
+    queueNumber: 'W-002',
+    arrivalPurpose: 'Service',
+    sdmsBookingId: null,
+    licensePlate: 'B 5678 XYZ',
+    policeRegNo: 'B 5678 XYZ',
+    customerName: 'Siti Rahma',
+    customerPhone: '089876543210',
+    vehicleModel: 'SUZUKI ALL NEW ERTIGA HYBRID',
+    groupCode: 'SUZUKI ALL NEW ERTIGA HYBRID',
+    serviceType: 'GENERAL REPAIR',
+    status: 'ServiceCompleted',
+    stallName: 'Stall 03',
+    checkInTime: new Date(Date.now() - 5400000).toISOString(),
+    saTargetFinishTime: new Date(Date.now() + 600000).toISOString(),
+    foremanExtraMinutes: 15,
+    isOverdueWithForemanExtension: true
+  },
+  {
+    ticketId: 't-103',
+    ticketNo: 'TICK-1003',
+    queueNumber: 'W-003',
+    arrivalPurpose: 'Service',
+    sdmsBookingId: null,
+    licensePlate: 'B 9999 SZK',
+    policeRegNo: 'B 9999 SZK',
+    customerName: 'PT Trans Jaya',
+    customerPhone: '081122334455',
+    vehicleModel: 'SUZUKI CARRY PICK UP',
+    groupCode: 'SUZUKI CARRY PICK UP',
+    serviceType: 'PAKET 30.000 KM',
+    status: 'CheckedIn',
+    stallName: 'Penerimaan',
+    checkInTime: new Date(Date.now() - 1800000).toISOString(),
+    saTargetFinishTime: new Date(Date.now() + 7200000).toISOString(),
+    foremanExtraMinutes: 0
+  },
+  {
+    ticketId: 't-104',
+    ticketNo: 'TICK-1004',
+    queueNumber: 'W-004',
+    arrivalPurpose: 'Service',
+    sdmsBookingId: null,
+    licensePlate: 'B 2345 DEF',
+    policeRegNo: 'B 2345 DEF',
+    customerName: 'Agus Wijaya',
+    customerPhone: '081234567890',
+    vehicleModel: 'SUZUKI GRAND VITARA',
+    groupCode: 'SUZUKI GRAND VITARA',
+    serviceType: 'PAKET 20.000 KM',
+    status: 'InService',
+    stallName: 'Stall 02',
+    checkInTime: new Date(Date.now() - 2700000).toISOString(),
+    saTargetFinishTime: new Date(Date.now() + 3600000).toISOString(),
+    foremanExtraMinutes: 0
+  }
+];
+
 export async function fetchTickets() {
   try {
     const res = await httpClient.get('/tickets');
-    return res.data || res;
+    const data = res.data || res;
+    return Array.isArray(data) && data.length > 0 ? data : MOCK_FALLBACK_TICKETS;
   } catch (e) {
-    return [];
+    return MOCK_FALLBACK_TICKETS;
   }
 }
 
 export async function checkInVehicle(data) {
   try {
     const payload = {
-      sdmsBookingId: data.sdmsBookingId || null,
-      licensePlate: (data.licensePlate || '').toUpperCase().trim(),
-      vehicleModel: data.vehicleModel || 'Suzuki XL7',
-      serviceType: data.serviceType || 'Periodic Service',
-      arrivalPurpose: data.arrivalPurpose || 'Service',
-      categoryPassComm: data.categoryPassComm || 'Passenger'
+      CompanyCode: data.companyCode || '6006406',
+      BranchCode: data.branchCode || '6006401',
+      BookingNo: data.sdmsBookingId || data.bookingNo || null,
+      PoliceRegNo: (data.licensePlate || '').toUpperCase().trim(),
+      GroupCode: data.vehicleModel || 'Suzuki XL7',
+      JobType: data.serviceType || 'Periodic Service',
+      arrivalPurpose: data.arrivalPurpose || 'Service'
     };
     const res = await httpClient.post('/checkin', payload);
     return res.data || res;
   } catch (e) {
     const isService = (data.arrivalPurpose || 'Service') === 'Service';
-    const isBooking = Boolean(data.sdmsBookingId);
+    const bookingId = data.sdmsBookingId || data.bookingNo;
     let qNum = null;
     if (isService) {
-      if (isBooking) {
-        qNum = data.sdmsBookingId.startsWith('B-') ? data.sdmsBookingId : `B-${data.sdmsBookingId}`;
+      if (bookingId) {
+        qNum = bookingId;
       } else {
         qNum = 'W-' + Math.floor(100 + Math.random() * 900);
       }
@@ -51,12 +230,20 @@ export async function checkInVehicle(data) {
       ticketNo: 'TICK-' + Date.now().toString().slice(-6),
       queueNumber: qNum,
       arrivalPurpose: data.arrivalPurpose || 'Service',
-      sdmsBookingId: data.sdmsBookingId || null,
-      licensePlate: (data.licensePlate || 'B 1234 ABC').toUpperCase(),
+      sdmsBookingId: bookingId || null,
+      bookingNo: bookingId || null,
+      licensePlate: (data.licensePlate || data.policeRegNo || 'B 1234 ABC').toUpperCase(),
+      policeRegNo: (data.policeRegNo || data.licensePlate || 'B 1234 ABC').toUpperCase(),
       customerName: data.customerName || '-',
-      customerPhone: '-',
-      vehicleModel: data.vehicleModel || 'Suzuki XL7',
-      serviceType: data.serviceType || 'Periodic Service',
+      customerPhone: data.customerPhone || data.telponNo || '-',
+      telponNo: data.telponNo || data.customerPhone || '-',
+      vehicleModel: data.vehicleModel || data.groupCode || 'Suzuki XL7',
+      groupCode: data.groupCode || data.vehicleModel || 'Suzuki XL7',
+      serviceType: data.serviceType || data.jobType || 'Periodic Service',
+      jobType: data.jobType || data.serviceType || 'Periodic Service',
+      reservasiTime: data.reservasiTime || data.bookingTime || data.ReservasiTime || null,
+      bookingTime: data.reservasiTime || data.bookingTime || data.ReservasiTime || null,
+      reservasiDate: data.reservasiDate || data.ReservasiDate || null,
       status: 'CheckedIn',
       checkInTime: new Date().toISOString()
     };

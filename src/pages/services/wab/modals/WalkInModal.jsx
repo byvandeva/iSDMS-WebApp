@@ -3,7 +3,7 @@ import { Wrench, ShoppingBag, Layers, Package, Camera, CheckCircle } from 'lucid
 import { theme } from '../../../../configs/themeConfig';
 import ModalWrapper, { ModalCard } from '../../../../utility/components/ModalWrapper';
 
-const OCR_SPACE_API_KEY = 'K89836873688957';
+const OCR_SPACE_API_KEY = import.meta.env.VITE_OCR_SPACE_API_KEY || 'K89836873688957';
 
 const SUZUKI_MODELS = [
   'Suzuki Fronx', 'Suzuki New XL7 Hybrid', 'Suzuki Grand Vitara',

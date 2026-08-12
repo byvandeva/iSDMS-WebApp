@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { submitWabForm } from '../../pages/services/wab/api';
 
-const WabFormContext = createContext(null);
+export const WabFormContext = createContext(null);
 
 const INITIAL_FUNCTIONAL_INSPECTIONS = [
   { id: 'horn', name: 'Klakson / Horn', status: 'OK', notes: '' },
@@ -40,6 +40,10 @@ export function WabFormProvider({ children }) {
 
   const handleFunctionalChange = useCallback((id, field, value) => {
     setFunctionalInspections(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  }, []);
+
+  const handleMarkAllFunctionalOk = useCallback(() => {
+    setFunctionalInspections(prev => prev.map(item => ({ ...item, status: 'OK' })));
   }, []);
 
   const handleAddTextNote = useCallback(() => {
@@ -127,6 +131,7 @@ export function WabFormProvider({ children }) {
       focusFrame, setFocusFrame,
       showExteriorModal, setShowExteriorModal,
       handleFunctionalChange,
+      handleMarkAllFunctionalOk,
       handleAddTextNote,
       handleRemoveTextNote,
       handlePartClick,
@@ -140,8 +145,4 @@ export function WabFormProvider({ children }) {
       {children}
     </WabFormContext.Provider>
   );
-}
-
-export function useWabForm() {
-  return useContext(WabFormContext);
 }

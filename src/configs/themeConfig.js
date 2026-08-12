@@ -11,7 +11,7 @@ export const themeConfig = {
     textPrimary: '#0f172a',
     textSecondary: '#334155',
     textMuted: '#64748b',
-    overlay: 'rgba(0,0,0,0.5)',
+    overlay: 'rgba(15, 23, 42, 0.4)',
     status: {
       checkedIn: '#0284c7',
       inProgress: '#0054a6',
@@ -21,7 +21,13 @@ export const themeConfig = {
       success: '#16a34a',
     },
   },
-  radius: { sm: '4px', md: '6px', lg: '12px', xl: '16px' },
+  radius: {
+    sm: '6px',
+    md: '10px',
+    lg: '14px',
+    xl: '20px',
+    full: '9999px',
+  },
   spacing: { xs: '4px', sm: '8px', md: '12px', lg: '16px', xl: '24px' },
   font: { family: "'Inter', sans-serif", sizeSm: '0.825rem', sizeXs: '0.75rem', sizeMd: '0.9rem' },
   shadow: {

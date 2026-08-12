@@ -1,4 +1,5 @@
-/**
- * Type definitions for Sparepart Module.
- * TODO: Define SDMS Sparepart request/response shapes once confirmed.
- */
+export const SparepartStatusEnum = {
+  Available: 'Available',
+  LowStock: 'LowStock',
+  OutOfStock: 'OutOfStock'
+};

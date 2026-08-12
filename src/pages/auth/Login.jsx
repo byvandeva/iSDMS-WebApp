@@ -6,6 +6,7 @@ const LOGIN_ROLES = [
   { role: 'Security', label: 'Security Gate', email: 'security@suzuki.co.id' },
   { role: 'ServiceAdvisor', label: 'Service Advisor', email: 'sa@suzuki.co.id' },
   { role: 'Foreman', label: 'Foreman', email: 'foreman@suzuki.co.id' },
+  { role: 'CCM', label: 'Customer Care Manager (CCM)', email: 'ccm@suzuki.co.id' },
   { role: 'Admin', label: 'Super Admin', email: 'admin@suzuki.co.id' }
 ];
 
@@ -45,14 +46,14 @@ export default function LoginPage({ toast }) {
         overflow: 'hidden'
       }}>
         <div style={{ position: 'relative', zIndex: 2 }}>
-          <img src="/suzuki_white_logo.svg" alt="Suzuki Logo" style={{ height: '56px', objectFit: 'contain' }} />
+          <img src="/assets/logos/suzuki_white_logo.svg" alt="Suzuki Logo" style={{ height: '56px', objectFit: 'contain' }} />
         </div>
       </div>
 
       <div style={{ flex: '1 1 45%', minWidth: '420px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '3.5rem', backgroundColor: '#ffffff', position: 'relative' }}>
         <div style={{ width: '100%', maxWidth: '420px' }}>
           <div style={{ marginBottom: '2.25rem' }}>
-            <img src="/suzuki_logo.svg" alt="Suzuki Logo" style={{ height: '42px', objectFit: 'contain', marginBottom: '1.25rem' }} />
+            <img src="/assets/logos/suzuki_logo.svg" alt="Suzuki Logo" style={{ height: '42px', objectFit: 'contain', marginBottom: '1.25rem' }} />
           </div>
 
           <form

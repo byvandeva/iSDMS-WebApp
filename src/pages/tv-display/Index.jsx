@@ -7,11 +7,17 @@ const PAGE_SIZE = 5;
 const PAGE_DURATION = 8000;
 const HUB_URL = import.meta.env.VITE_HUB_URL || 'http://localhost:5000/hubs/service-workflow';
 
-export default function TvDisplayPage() {
-  const [tickets, setTickets] = useState([]);
+export default function TvDisplayPage({ tickets: parentTickets = [] }) {
+  const [tickets, setTickets] = useState(parentTickets);
   const [currentTime, setCurrentTime] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageProgress, setPageProgress] = useState(0);
+
+  useEffect(() => {
+    if (Array.isArray(parentTickets) && parentTickets.length > 0) {
+      setTickets(parentTickets);
+    }
+  }, [parentTickets]);
 
   useEffect(() => {
     const updateClock = () =>
@@ -55,23 +61,29 @@ export default function TvDisplayPage() {
   };
 
   useEffect(() => {
-    fetchTickets().then(setTickets);
+    fetchTickets().then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        setTickets(data);
+      }
+    });
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(HUB_URL)
       .withAutomaticReconnect()
       .build();
 
-    connection.on('vehicleCheckedIn',     applyTicketUpdate);
-    connection.on('inspectionUpdated',    applyTicketUpdate);
+    connection.on('vehicleCheckedIn', applyTicketUpdate);
+    connection.on('inspectionUpdated', applyTicketUpdate);
     connection.on('workshopStatusUpdated', applyTicketUpdate);
-    connection.on('ticketCompleted',      applyTicketUpdate);
+    connection.on('ticketCompleted', applyTicketUpdate);
 
     connection.start().catch(console.error);
     return () => connection.stop();
   }, []);
 
-  const activeTickets = tickets.filter(t => {
+  const displayTickets = (tickets && tickets.length > 0) ? tickets : parentTickets;
+
+  const activeTickets = displayTickets.filter(t => {
     const s = String(t.status).toLowerCase();
     return s !== 'checkedout' && s !== '8';
   });
@@ -84,7 +96,7 @@ export default function TvDisplayPage() {
       <header style={{ flexShrink: 0, background: '#fff', borderRadius: '12px', border: '1px solid #cbd5e1', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: '1.25rem', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <img src="/suzuki_logo.png" alt="Suzuki Logo" style={{ height: '45px', objectFit: 'contain' }} />
+            <img src="/assets/logos/suzuki_logo.svg" alt="Suzuki Logo" style={{ height: '45px', objectFit: 'contain' }} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <h1 style={{ margin: 0, color: '#0f172a', fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.5px' }}>

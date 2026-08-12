@@ -38,6 +38,12 @@ export function useWabForm() {
     );
   };
 
+  const markAllFunctionalOk = () => {
+    setFunctionalInspections(prev =>
+      prev.map(item => ({ ...item, status: 'OK' }))
+    );
+  };
+
   const resetForm = () => {
     setWabStep(1);
     setSelectedTicket(null);
@@ -61,7 +67,7 @@ export function useWabForm() {
     signatureData, setSignatureData,
     damages, setDamages,
     exteriorTextNotes, setExteriorTextNotes,
-    functionalInspections, updateFunctionalInspection,
+    functionalInspections, updateFunctionalInspection, markAllFunctionalOk,
     resetForm,
   };
 }

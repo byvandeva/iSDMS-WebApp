@@ -108,12 +108,18 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
     return s === 'Inspected' || s === 'WabDone' || s === 'InService' || s === 'ServiceCompleted' || s === '1' || s === '2' || s === '3' || s === '5';
   });
 
-  const undistributedTickets = eligibleTickets.filter(t => getJob(t.ticketId).status === 'Undistributed' && t.status !== 'ServiceCompleted' && t.status !== 'CheckedOut');
-  const distributedTickets = eligibleTickets.filter(t => {
-    const js = getJob(t.ticketId).status;
-    return js === 'InProgress' || js === 'Completed' || t.status === 'InService';
+  const undistributedTickets = eligibleTickets.filter(t => {
+    const s = String(t.status || '');
+    const isAlreadyAssigned = s === 'InService' || s === 'AssignedToStall' || s === 'ServiceCompleted' || s === 'PreHandoverReady' || s === 'HandoverCompleted' || s === 'CheckedOut' || s === '2' || s === '3' || s === '5' || s === '6' || s === '7' || s === '8';
+    return !isAlreadyAssigned && getJob(t.ticketId).status === 'Undistributed';
   });
-  const inProgressCount = distributedTickets.filter(t => getJob(t.ticketId).status === 'InProgress' || t.status === 'InService').length;
+
+  const distributedTickets = eligibleTickets.filter(t => {
+    const s = String(t.status || '');
+    const isAssigned = s === 'InService' || s === 'AssignedToStall' || s === '2' || s === '3' || getJob(t.ticketId).status === 'InProgress';
+    return isAssigned && s !== 'ServiceCompleted' && s !== 'PreHandoverReady' && s !== 'HandoverCompleted' && s !== 'CheckedOut' && s !== '5' && s !== '6' && s !== '7' && s !== '8';
+  });
+  const inProgressCount = distributedTickets.length;
   const completedTickets = tickets.filter(t => t.status === 'ServiceCompleted' || t.status === 'PreHandoverReady' || t.status === 'HandoverCompleted' || t.status === 'CheckedOut');
 
   const handleOpenAssignModal = (ticket) => {
@@ -149,18 +155,21 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
     if (!recDesc.trim()) return alert('Isi deskripsi rekomendasi.');
     if (!recCustomDate) return alert('Pilih tanggal target rekomendasi.');
     const { ticketId, existingRec } = recModal;
-    const job = getJob(ticketId);
-    const beforeDate = new Date(recCustomDate).toISOString();
-    const recs = existingRec
-      ? job.recommendations.map(r => r.id === existingRec.id ? { ...r, description: recDesc.trim(), beforeDate } : r)
-      : [...job.recommendations, { id: Date.now().toString(), description: recDesc.trim(), beforeDate, createdAt: new Date().toISOString() }];
-    updateJob(ticketId, { recommendations: recs });
+    const currentRecs = getJob(ticketId).recommendations;
+    let nextRecs = [];
+    if (existingRec) {
+      nextRecs = currentRecs.map(r => r.id === existingRec.id ? { ...r, description: recDesc.trim(), beforeDate: new Date(recCustomDate).toISOString() } : r);
+    } else {
+      nextRecs = [...currentRecs, { id: 'rec_' + Date.now(), description: recDesc.trim(), beforeDate: new Date(recCustomDate).toISOString(), createdAt: new Date().toISOString() }];
+    }
+    updateJob(ticketId, { recommendations: nextRecs });
     setRecModal({ visible: false, ticketId: null, existingRec: null });
   };
 
   const handleDeleteRec = (ticketId, rec) => {
-    const job = getJob(ticketId);
-    updateJob(ticketId, { recommendations: job.recommendations.filter(r => r.id !== rec.id) });
+    const currentRecs = getJob(ticketId).recommendations;
+    const nextRecs = currentRecs.filter(r => r.id !== rec.id);
+    updateJob(ticketId, { recommendations: nextRecs });
     setDelRecModal({ visible: false, ticketId: null, rec: null });
   };
 
@@ -171,31 +180,30 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
   };
 
   const handleSaveTrack = () => {
-    if (!trackLabel.trim()) return alert('Isi keterangan pekerjaan tracking.');
+    if (!trackLabel.trim()) return alert('Isi keterangan tracking.');
     const { ticketId } = trackModal;
-    const job = getJob(ticketId);
+    const currentEntries = getJob(ticketId).trackingEntries;
     const estimatedDoneTime = addMinutesToNow(trackMinutes);
-    const entry = { id: Date.now().toString(), label: trackLabel.trim(), estimatedDoneTime, addedAt: new Date().toISOString() };
-    updateJob(ticketId, { trackingEntries: [...job.trackingEntries, entry] });
-    onUpdateTracking?.({ ticketId, stallName: job.assignedTechnician?.stallName || 'Stall 01', technicianName: job.assignedTechnician?.name || 'Budi', foremanRecommendation: trackLabel.trim(), addExtraMinutes: trackMinutes });
+    const newEntry = { id: 'trk_' + Date.now(), label: trackLabel.trim(), estimatedDoneTime, createdAt: new Date().toISOString() };
+    updateJob(ticketId, { trackingEntries: [...currentEntries, newEntry] });
+    onUpdateTracking?.({ ticketId, stallName: getJob(ticketId).assignedTechnician?.stallName || 'Stall', technicianName: getJob(ticketId).assignedTechnician?.name || 'Teknisi', foremanRecommendation: trackLabel.trim(), addExtraMinutes: trackMinutes });
     setTrackModal({ visible: false, ticketId: null });
   };
 
   const handleOpenDelegModal = (ticketId) => {
-    const job = getJob(ticketId);
     setDelegSubTab('tech');
     setDelegTech(null);
     setDelegForeman(null);
-    setDelegStall(job.assignedTechnician?.stallName || '');
+    setDelegStall(getJob(ticketId).assignedTechnician?.stallName || '');
     setDelegModal({ visible: true, ticketId });
   };
 
   const handleConfirmChangeTech = () => {
     if (!delegTech) return alert('Pilih teknisi baru.');
-    if (!delegStall.trim()) return alert('Isi nama stall.');
+    if (!delegStall.trim()) return alert('Isi nama stall bengkel.');
     const { ticketId } = delegModal;
     updateJob(ticketId, { assignedTechnician: { ...delegTech, stallName: delegStall.trim() } });
-    onUpdateTracking?.({ ticketId, stallName: delegStall.trim(), technicianName: delegTech.name, foremanRecommendation: '', addExtraMinutes: 0 });
+    onUpdateTracking?.({ ticketId, stallName: delegStall.trim(), technicianName: delegTech.name, foremanRecommendation: 'Pindah Teknisi', addExtraMinutes: 0 });
     setDelegModal({ visible: false, ticketId: null });
   };
 
@@ -218,16 +226,26 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
     <div>
       <PageHeader title="Foreman Workshop Board" />
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: `1px solid ${theme.color.borderLight}`, paddingBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', gap: '0.55rem', marginBottom: '1.25rem' }}>
         <button
           type="button"
           onClick={() => setActiveTab('undistributed')}
           style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 1.15rem', borderRadius: '4px', border: 'none',
-            backgroundColor: activeTab === 'undistributed' ? theme.color.dark : theme.color.surfaceAlt, color: activeTab === 'undistributed' ? theme.color.surface : theme.color.textSecondary,
-            fontWeight: 700, fontSize: theme.font.sizeSm, cursor: 'pointer', transition: 'all 0.15s ease'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.55rem 1.15rem',
+            borderRadius: theme.radius.md,
+            border: activeTab === 'undistributed' ? `1px solid ${theme.color.dark}` : `1px solid ${theme.color.borderLight}`,
+            backgroundColor: theme.color.surface,
+            color: activeTab === 'undistributed' ? theme.color.dark : theme.color.textMuted,
+            fontWeight: activeTab === 'undistributed' ? 700 : 600,
+            fontSize: theme.font.sizeSm,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
           }}
         >
+          <Inbox size={16} color={activeTab === 'undistributed' ? theme.color.dark : theme.color.textMuted} />
           Belum Terdistribusi ({undistributedTickets.length})
         </button>
 
@@ -235,26 +253,36 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
           type="button"
           onClick={() => setActiveTab('distributed')}
           style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 1.15rem', borderRadius: '4px', border: 'none',
-            backgroundColor: activeTab === 'distributed' ? theme.color.dark : theme.color.surfaceAlt, color: activeTab === 'distributed' ? theme.color.surface : theme.color.textSecondary,
-            fontWeight: 700, fontSize: theme.font.sizeSm, cursor: 'pointer', transition: 'all 0.15s ease'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.55rem 1.15rem',
+            borderRadius: theme.radius.md,
+            border: activeTab === 'distributed' ? `1px solid ${theme.color.dark}` : `1px solid ${theme.color.borderLight}`,
+            backgroundColor: theme.color.surface,
+            color: activeTab === 'distributed' ? theme.color.dark : theme.color.textMuted,
+            fontWeight: activeTab === 'distributed' ? 700 : 600,
+            fontSize: theme.font.sizeSm,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
           }}
         >
+          <Layers size={16} color={activeTab === 'distributed' ? theme.color.dark : theme.color.textMuted} />
           Distribusi Pekerjaan ({distributedTickets.length})
         </button>
       </div>
 
       <div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-          <div style={{ background: theme.color.surface, padding: '1rem 1.25rem', borderRadius: '4px', border: `1px solid ${theme.color.border}` }}>
+          <div style={{ background: theme.color.surface, padding: '1rem 1.25rem', borderRadius: theme.radius.lg, border: `1px solid ${theme.color.borderLight}`, boxShadow: theme.shadow.card }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: theme.color.textMuted, textTransform: 'uppercase' }}>Antri Distribusi</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: theme.color.textPrimary, marginTop: '0.2rem' }}>{undistributedTickets.length} Kendaraan</div>
           </div>
-          <div style={{ background: theme.color.surface, padding: '1rem 1.25rem', borderRadius: '4px', border: `1px solid ${theme.color.border}` }}>
+          <div style={{ background: theme.color.surface, padding: '1rem 1.25rem', borderRadius: theme.radius.lg, border: `1px solid ${theme.color.borderLight}`, boxShadow: theme.shadow.card }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: theme.color.textMuted, textTransform: 'uppercase' }}>Dikerjakan (In-Stall)</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: theme.color.textPrimary, marginTop: '0.2rem' }}>{inProgressCount} Kendaraan</div>
           </div>
-          <div style={{ background: theme.color.surface, padding: '1rem 1.25rem', borderRadius: '4px', border: `1px solid ${theme.color.border}` }}>
+          <div style={{ background: theme.color.surface, padding: '1rem 1.25rem', borderRadius: theme.radius.lg, border: `1px solid ${theme.color.borderLight}`, boxShadow: theme.shadow.card }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: theme.color.textMuted, textTransform: 'uppercase' }}>Selesai Servis</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: theme.color.textPrimary, marginTop: '0.2rem' }}>{completedTickets.length} Kendaraan</div>
           </div>
@@ -263,7 +291,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
         {activeTab === 'undistributed' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {undistributedTickets.length === 0 ? (
-              <div style={{ background: theme.color.surface, border: `1px solid ${theme.color.border}`, borderRadius: '4px', padding: '3.5rem', textAlign: 'center', color: theme.color.textMuted }}>
+              <div style={{ background: theme.color.surface, border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.lg, padding: '3.5rem', textAlign: 'center', color: theme.color.textMuted }}>
                 <Inbox size={42} color={theme.color.border} style={{ margin: '0 auto 0.75rem auto' }} />
                 <p style={{ margin: 0, fontSize: theme.font.sizeMd, fontWeight: 600, color: theme.color.textSecondary }}>Tidak ada pekerjaan baru.</p>
                 <span style={{ fontSize: theme.font.sizeSm, color: theme.color.textMuted }}>Tunggu Service Advisor menyelesaikan Form WAB.</span>
@@ -272,12 +300,12 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
               undistributedTickets.map(t => {
                 const job = getJob(t.ticketId);
                 return (
-                  <div key={t.ticketId} style={{ background: theme.color.surface, border: `1px solid ${theme.color.border}`, borderRadius: '4px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div key={t.ticketId} style={{ background: theme.color.surface, border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.lg, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: theme.shadow.card }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ background: theme.color.dark, color: theme.color.surface, padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700, fontSize: '0.85rem' }}>
+                      <span style={{ background: theme.color.dark, color: theme.color.surface, padding: '2px 8px', borderRadius: theme.radius.sm, fontFamily: 'monospace', fontWeight: 700, fontSize: '0.85rem' }}>
                         {t.queueNumber || 'Non-Q'}
                       </span>
-                      <span style={{ padding: '3px 9px', borderRadius: '4px', background: '#d97706', color: '#ffffff', fontSize: theme.font.sizeXs, fontWeight: 700 }}>
+                      <span style={{ padding: '3px 9px', borderRadius: theme.radius.sm, background: '#d97706', color: '#ffffff', fontSize: theme.font.sizeXs, fontWeight: 700 }}>
                         Belum Distribusi
                       </span>
                     </div>
@@ -289,14 +317,14 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                     </div>
 
                     {t.delegatedFrom && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: theme.color.surfaceAlt, border: `1px solid ${theme.color.border}`, padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: theme.font.sizeXs, color: theme.color.textPrimary, fontWeight: 600 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: theme.color.surfaceAlt, border: `1px solid ${theme.color.borderLight}`, padding: '0.35rem 0.6rem', borderRadius: theme.radius.md, fontSize: theme.font.sizeXs, color: theme.color.textPrimary, fontWeight: 600 }}>
                         <CornerDownRight size={13} />
                         <span>Diterima dari: {t.delegatedFrom}</span>
                       </div>
                     )}
 
                     {t.customerComplaints && (
-                      <div style={{ background: theme.color.bg, border: `1px solid ${theme.color.borderLight}`, padding: '0.6rem 0.75rem', borderRadius: '4px', fontSize: theme.font.sizeSm, color: theme.color.textSecondary }}>
+                      <div style={{ background: theme.color.bg, border: `1px solid ${theme.color.borderLight}`, padding: '0.6rem 0.75rem', borderRadius: theme.radius.md, fontSize: theme.font.sizeSm, color: theme.color.textSecondary }}>
                         <b style={{ color: theme.color.textPrimary }}>Keluhan:</b> {t.customerComplaints}
                       </div>
                     )}
@@ -315,7 +343,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                         justifyContent: 'center',
                         gap: '0.5rem',
                         marginTop: '0.25rem',
-                        borderRadius: '4px',
+                        borderRadius: theme.radius.md,
                         border: `1.5px solid ${theme.color.dark}`,
                         cursor: 'pointer',
                         transition: 'all 0.15s ease'
@@ -337,7 +365,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
         {activeTab === 'distributed' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {distributedTickets.length === 0 ? (
-              <div style={{ background: theme.color.surface, border: `1px solid ${theme.color.border}`, borderRadius: '4px', padding: '3.5rem', textAlign: 'center', color: theme.color.textMuted }}>
+              <div style={{ background: theme.color.surface, border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.lg, padding: '3.5rem', textAlign: 'center', color: theme.color.textMuted }}>
                 <Layers size={42} color={theme.color.border} style={{ margin: '0 auto 0.75rem auto' }} />
                 <p style={{ margin: 0, fontSize: theme.font.sizeMd, fontWeight: 600, color: theme.color.textSecondary }}>Belum ada pekerjaan terdistribusi.</p>
                 <span style={{ fontSize: theme.font.sizeSm, color: theme.color.textMuted }}>Assign teknisi dari tab "Belum Terdistribusi".</span>
@@ -347,17 +375,17 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                 const job = getJob(t.ticketId);
                 const isCompleted = job.status === 'Completed' || t.status === 'ServiceCompleted';
                 return (
-                  <div key={t.ticketId} style={{ background: theme.color.surface, border: `1px solid ${theme.color.border}`, borderRadius: '4px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div key={t.ticketId} style={{ background: theme.color.surface, border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.lg, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', boxShadow: theme.shadow.card }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ background: theme.color.dark, color: theme.color.surface, padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700, fontSize: '0.85rem' }}>
+                      <span style={{ background: theme.color.dark, color: theme.color.surface, padding: '2px 8px', borderRadius: theme.radius.sm, fontFamily: 'monospace', fontWeight: 700, fontSize: '0.85rem' }}>
                         {t.queueNumber || 'Non-Q'}
                       </span>
                       {isCompleted ? (
-                        <span style={{ padding: '3px 9px', borderRadius: '4px', background: '#16a34a', color: '#ffffff', fontSize: theme.font.sizeXs, fontWeight: 700 }}>
+                        <span style={{ padding: '3px 9px', borderRadius: theme.radius.sm, background: '#16a34a', color: '#ffffff', fontSize: theme.font.sizeXs, fontWeight: 700 }}>
                           ✓ Selesai
                         </span>
                       ) : (
-                        <span style={{ padding: '3px 9px', borderRadius: '4px', background: '#0054a6', color: '#ffffff', fontSize: theme.font.sizeXs, fontWeight: 700 }}>
+                        <span style={{ padding: '3px 9px', borderRadius: theme.radius.sm, background: '#0054a6', color: '#ffffff', fontSize: theme.font.sizeXs, fontWeight: 700 }}>
                           Dikerjakan
                         </span>
                       )}
@@ -370,21 +398,21 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                     </div>
 
                     {job.assignedTechnician && (
-                      <div style={{ background: theme.color.bg, border: `1px solid ${theme.color.border}`, padding: '0.6rem 0.75rem', borderRadius: '4px', fontSize: theme.font.sizeSm, color: theme.color.textPrimary, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ background: theme.color.bg, border: `1px solid ${theme.color.borderLight}`, padding: '0.6rem 0.75rem', borderRadius: theme.radius.md, fontSize: theme.font.sizeSm, color: theme.color.textPrimary, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Wrench size={15} color={theme.color.primary} />
                         <span>{job.assignedTechnician.stallName} &bull; <b>{job.assignedTechnician.name}</b> ({job.assignedTechnician.specialty})</span>
                       </div>
                     )}
 
                     {job.recommendations.length > 0 && (
-                      <div style={{ background: theme.color.surface, border: `1px solid ${theme.color.border}`, borderRadius: '4px', padding: '0.75rem' }}>
+                      <div style={{ background: theme.color.surface, border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.md, padding: '0.75rem' }}>
                         <div style={{ fontSize: theme.font.sizeXs, fontWeight: 700, color: theme.color.textPrimary, marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <FileText size={14} color="#0054a6" />
                           <span>Rekomendasi Servis ({job.recommendations.length})</span>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {job.recommendations.map(rec => (
-                            <div key={rec.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: theme.font.sizeXs, padding: '0.35rem 0.5rem', background: theme.color.bg, border: `1px solid ${theme.color.border}`, borderRadius: '4px' }}>
+                            <div key={rec.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: theme.font.sizeXs, padding: '0.35rem 0.5rem', background: theme.color.bg, border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.md }}>
                               <div>
                                 <div style={{ fontWeight: 600, color: theme.color.textPrimary }}>{rec.description}</div>
                                 <div style={{ color: theme.color.textMuted, fontSize: '0.725rem' }}>Sebelum: {formatDate(rec.beforeDate)}</div>
@@ -402,14 +430,14 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                     )}
 
                     {job.trackingEntries.length > 0 && (
-                      <div style={{ background: theme.color.surface, border: `1px solid ${theme.color.border}`, borderRadius: '4px', padding: '0.75rem' }}>
+                      <div style={{ background: theme.color.surface, border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.md, padding: '0.75rem' }}>
                         <div style={{ fontSize: theme.font.sizeXs, fontWeight: 700, color: theme.color.textPrimary, marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <Clock size={14} color="#d97706" />
                           <span>Tracking Pekerjaan ({job.trackingEntries.length})</span>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {job.trackingEntries.map(entry => (
-                            <div key={entry.id} style={{ fontSize: theme.font.sizeXs, padding: '0.35rem 0.5rem', background: theme.color.bg, border: `1px solid ${theme.color.border}`, borderRadius: '4px' }}>
+                            <div key={entry.id} style={{ fontSize: theme.font.sizeXs, padding: '0.35rem 0.5rem', background: theme.color.bg, border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.md }}>
                               <div style={{ fontWeight: 600, color: theme.color.textPrimary }}>{entry.label}</div>
                               <div style={{ color: theme.color.textMuted, fontSize: '0.725rem' }}>Est. selesai: {formatDateTime(entry.estimatedDoneTime)}</div>
                             </div>
@@ -432,7 +460,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '0.35rem',
-                              borderRadius: '4px',
+                              borderRadius: theme.radius.md,
                               border: '1.5px solid #0054a6',
                               backgroundColor: '#ffffff',
                               color: '#0054a6',
@@ -458,7 +486,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '0.35rem',
-                              borderRadius: '4px',
+                              borderRadius: theme.radius.md,
                               border: '1.5px solid #d97706',
                               backgroundColor: '#ffffff',
                               color: '#d97706',
@@ -486,7 +514,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '0.35rem',
-                              borderRadius: '4px',
+                              borderRadius: theme.radius.md,
                               border: '1.5px solid #64748b',
                               backgroundColor: '#ffffff',
                               color: '#334155',
@@ -512,7 +540,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '0.35rem',
-                              borderRadius: '4px',
+                              borderRadius: theme.radius.md,
                               border: '1.5px solid #16a34a',
                               backgroundColor: '#16a34a',
                               color: '#ffffff',
@@ -544,7 +572,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
 
       {assignModal.visible && (
         <ModalWrapper>
-          <ModalCard width={480} style={{ borderRadius: '6px' }}>
+          <ModalCard width={480} style={{ borderRadius: theme.radius.lg }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: `1px solid ${theme.color.borderLight}`, paddingBottom: '0.75rem' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: theme.color.textPrimary }}>Assign Teknisi &amp; Stall</h3>
@@ -560,7 +588,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                   {MOCK_TECHNICIANS.map(tech => {
                     const isSel = assignTech?.id === tech.id;
                     return (
-                      <div key={tech.id} onClick={() => setAssignTech(tech)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem', borderRadius: '4px', border: isSel ? `2px solid ${theme.color.dark}` : `1px solid ${theme.color.border}`, background: isSel ? theme.color.bg : theme.color.surface, cursor: 'pointer' }}>
+                      <div key={tech.id} onClick={() => setAssignTech(tech)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem', borderRadius: theme.radius.md, border: isSel ? `1.5px solid ${theme.color.dark}` : `1px solid ${theme.color.borderLight}`, background: isSel ? theme.color.bg : theme.color.surface, cursor: 'pointer' }}>
                         <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: isSel ? theme.color.dark : theme.color.surfaceAlt, color: isSel ? theme.color.surface : theme.color.textSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem' }}>{tech.name.charAt(0)}</div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: theme.font.sizeSm, fontWeight: isSel ? 700 : 600, color: theme.color.textPrimary }}>{tech.name}</div>
@@ -575,12 +603,12 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
 
               <div>
                 <label style={{ display: 'block', fontSize: theme.font.sizeSm, fontWeight: 600, color: theme.color.textSecondary, marginBottom: '0.35rem' }}>Stall Bengkel:</label>
-                <input style={{ width: '100%', padding: '0.6rem 0.75rem', border: `1px solid ${theme.color.border}`, borderRadius: '4px', fontSize: theme.font.sizeSm, color: theme.color.textPrimary, boxSizing: 'border-box' }} placeholder="Misal: Stall 01" value={assignStall} onChange={e => setAssignStall(e.target.value)} />
+                <input style={{ width: '100%', padding: '0.6rem 0.75rem', border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.md, fontSize: theme.font.sizeSm, color: theme.color.textPrimary, boxSizing: 'border-box' }} placeholder="Misal: Stall 01" value={assignStall} onChange={e => setAssignStall(e.target.value)} />
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: '4px' }} onClick={() => setAssignModal({ visible: false, ticket: null })}>Batal</button>
-                <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: '4px' }} onClick={handleConfirmAssign}>Assign &amp; Distribusikan</button>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: theme.radius.md }} onClick={() => setAssignModal({ visible: false, ticket: null })}>Batal</button>
+                <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: theme.radius.md }} onClick={handleConfirmAssign}>Assign &amp; Distribusikan</button>
               </div>
             </div>
           </ModalCard>
@@ -589,7 +617,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
 
       {recModal.visible && (
         <ModalWrapper>
-          <ModalCard width={440} style={{ borderRadius: '6px' }}>
+          <ModalCard width={440} style={{ borderRadius: theme.radius.lg }}>
             <h4 style={{ margin: '0 0 1rem 0', color: theme.color.textPrimary, fontSize: '1rem', fontWeight: 700 }}>
               {recModal.existingRec ? 'Edit Rekomendasi' : '+ Rekomendasi'}
             </h4>
@@ -597,7 +625,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: theme.font.sizeSm, fontWeight: 600, color: theme.color.textSecondary, marginBottom: '0.35rem' }}>Deskripsi Rekomendasi:</label>
-                <textarea rows={3} style={{ width: '100%', padding: '0.55rem', border: `1px solid ${theme.color.border}`, borderRadius: '4px', fontSize: theme.font.sizeSm, fontFamily: 'inherit', boxSizing: 'border-box' }} placeholder="Contoh: Ganti Ban Depan, Ganti Aki, Flush Radiator..." value={recDesc} onChange={e => setRecDesc(e.target.value)} />
+                <textarea rows={3} style={{ width: '100%', padding: '0.55rem', border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.md, fontSize: theme.font.sizeSm, fontFamily: 'inherit', boxSizing: 'border-box' }} placeholder="Contoh: Ganti Ban Depan, Ganti Aki, Flush Radiator..." value={recDesc} onChange={e => setRecDesc(e.target.value)} />
               </div>
 
               <div>
@@ -614,8 +642,8 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                     style={{
                       flex: 1,
                       padding: '0.5rem 0.65rem',
-                      border: `1px solid ${theme.color.border}`,
-                      borderRadius: '4px',
+                      border: `1px solid ${theme.color.borderLight}`,
+                      borderRadius: theme.radius.md,
                       fontSize: theme.font.sizeSm,
                       color: theme.color.textPrimary,
                       backgroundColor: theme.color.surface,
@@ -635,8 +663,8 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                         onClick={() => handlePresetDateClick(c.offset)}
                         style={{
                           padding: '0.35rem 0.65rem',
-                          borderRadius: '4px',
-                          border: isSel ? `2px solid ${theme.color.dark}` : `1px solid ${theme.color.border}`,
+                          borderRadius: theme.radius.md,
+                          border: isSel ? `1.5px solid ${theme.color.dark}` : `1px solid ${theme.color.borderLight}`,
                           background: isSel ? theme.color.dark : theme.color.surface,
                           color: isSel ? theme.color.surface : theme.color.textSecondary,
                           fontSize: '0.775rem',
@@ -657,8 +685,8 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: '4px' }} onClick={() => setRecModal({ visible: false, ticketId: null, existingRec: null })}>Batal</button>
-                <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: '4px' }} onClick={handleSaveRec}>{recModal.existingRec ? 'Update' : 'Simpan'}</button>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: theme.radius.md }} onClick={() => setRecModal({ visible: false, ticketId: null, existingRec: null })}>Batal</button>
+                <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: theme.radius.md }} onClick={handleSaveRec}>{recModal.existingRec ? 'Update' : 'Simpan'}</button>
               </div>
             </div>
           </ModalCard>
@@ -667,12 +695,12 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
 
       {delRecModal.visible && (
         <ModalWrapper>
-          <ModalCard width={340} style={{ borderRadius: '6px', textAlign: 'center' }}>
+          <ModalCard width={340} style={{ borderRadius: theme.radius.lg, textAlign: 'center' }}>
             <h4 style={{ margin: '0 0 0.35rem 0', color: theme.color.textPrimary, fontSize: '1rem', fontWeight: 700 }}>Hapus Rekomendasi?</h4>
             <p style={{ margin: '0 0 1.25rem 0', fontSize: theme.font.sizeSm, color: theme.color.textMuted }}>{delRecModal.rec?.description}</p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: '4px' }} onClick={() => setDelRecModal({ visible: false, ticketId: null, rec: null })}>Batal</button>
-              <button type="button" className="btn" style={{ flex: 1, backgroundColor: theme.color.status.danger, color: theme.color.surface, fontWeight: 700, borderRadius: '4px' }} onClick={() => handleDeleteRec(delRecModal.ticketId, delRecModal.rec)}>Hapus</button>
+              <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: theme.radius.md }} onClick={() => setDelRecModal({ visible: false, ticketId: null, rec: null })}>Batal</button>
+              <button type="button" className="btn" style={{ flex: 1, backgroundColor: theme.color.status.danger, color: theme.color.surface, fontWeight: 700, borderRadius: theme.radius.md }} onClick={() => handleDeleteRec(delRecModal.ticketId, delRecModal.rec)}>Hapus</button>
             </div>
           </ModalCard>
         </ModalWrapper>
@@ -680,21 +708,21 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
 
       {trackModal.visible && (
         <ModalWrapper>
-          <ModalCard width={440} style={{ borderRadius: '6px' }}>
+          <ModalCard width={440} style={{ borderRadius: theme.radius.lg }}>
             <h4 style={{ margin: '0 0 0.25rem 0', color: theme.color.textPrimary, fontSize: '1rem', fontWeight: 700 }}>+ Request Tracking Pekerjaan</h4>
             <p style={{ margin: '0 0 1rem 0', fontSize: theme.font.sizeXs, color: theme.color.textMuted }}>Tracking tambahan akan mempengaruhi status di TV Display Customer Lounge.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: theme.font.sizeSm, fontWeight: 600, color: theme.color.textSecondary, marginBottom: '0.35rem' }}>Keterangan Pekerjaan:</label>
-                <input style={{ width: '100%', padding: '0.6rem 0.75rem', border: `1px solid ${theme.color.border}`, borderRadius: '4px', fontSize: theme.font.sizeSm, color: theme.color.textPrimary, boxSizing: 'border-box' }} placeholder="Contoh: Ganti Radiator, Kuras Minyak Rem..." value={trackLabel} onChange={e => setTrackLabel(e.target.value)} />
+                <input style={{ width: '100%', padding: '0.6rem 0.75rem', border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.md, fontSize: theme.font.sizeSm, color: theme.color.textPrimary, boxSizing: 'border-box' }} placeholder="Contoh: Ganti Radiator, Kuras Minyak Rem..." value={trackLabel} onChange={e => setTrackLabel(e.target.value)} />
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: theme.font.sizeSm, fontWeight: 600, color: theme.color.textSecondary, marginBottom: '0.4rem' }}>Estimasi Selesai:</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                   {TIME_CHIPS.map(c => (
-                    <button key={c.minutes} type="button" onClick={() => setTrackMinutes(c.minutes)} style={{ padding: '0.35rem 0.65rem', borderRadius: '4px', border: trackMinutes === c.minutes ? `2px solid ${theme.color.dark}` : `1px solid ${theme.color.border}`, background: trackMinutes === c.minutes ? theme.color.dark : theme.color.surface, color: trackMinutes === c.minutes ? theme.color.surface : theme.color.textSecondary, fontSize: '0.775rem', fontWeight: 600, cursor: 'pointer' }}>
+                    <button key={c.minutes} type="button" onClick={() => setTrackMinutes(c.minutes)} style={{ padding: '0.35rem 0.65rem', borderRadius: theme.radius.md, border: trackMinutes === c.minutes ? `1.5px solid ${theme.color.dark}` : `1px solid ${theme.color.borderLight}`, background: trackMinutes === c.minutes ? theme.color.dark : theme.color.surface, color: trackMinutes === c.minutes ? theme.color.surface : theme.color.textSecondary, fontSize: '0.775rem', fontWeight: 600, cursor: 'pointer' }}>
                       {c.label}
                     </button>
                   ))}
@@ -703,8 +731,8 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: '4px' }} onClick={() => setTrackModal({ visible: false, ticketId: null })}>Batal</button>
-                <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: '4px' }} onClick={handleSaveTrack}>Tambah Tracking</button>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: theme.radius.md }} onClick={() => setTrackModal({ visible: false, ticketId: null })}>Batal</button>
+                <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: theme.radius.md }} onClick={handleSaveTrack}>Tambah Tracking</button>
               </div>
             </div>
           </ModalCard>
@@ -713,17 +741,17 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
 
       {delegModal.visible && (
         <ModalWrapper>
-          <ModalCard width={460} style={{ borderRadius: '6px' }}>
+          <ModalCard width={460} style={{ borderRadius: theme.radius.lg }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: `1px solid ${theme.color.borderLight}`, paddingBottom: '0.75rem' }}>
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: theme.color.textPrimary }}>Pindahkan Tugas</h3>
               <button onClick={() => setDelegModal({ visible: false, ticketId: null })} style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.color.textMuted }}><X size={20} /></button>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-              <button type="button" onClick={() => setDelegSubTab('tech')} style={{ flex: 1, padding: '0.45rem', borderRadius: '4px', border: 'none', background: delegSubTab === 'tech' ? theme.color.dark : theme.color.surfaceAlt, color: delegSubTab === 'tech' ? theme.color.surface : theme.color.textSecondary, fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+              <button type="button" onClick={() => setDelegSubTab('tech')} style={{ flex: 1, padding: '0.45rem', borderRadius: theme.radius.md, border: 'none', background: delegSubTab === 'tech' ? theme.color.dark : theme.color.surfaceAlt, color: delegSubTab === 'tech' ? theme.color.surface : theme.color.textSecondary, fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
                 <User size={14} /> Ganti Teknisi
               </button>
-              <button type="button" onClick={() => setDelegSubTab('foreman')} style={{ flex: 1, padding: '0.45rem', borderRadius: '4px', border: 'none', background: delegSubTab === 'foreman' ? theme.color.dark : theme.color.surfaceAlt, color: delegSubTab === 'foreman' ? theme.color.surface : theme.color.textSecondary, fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+              <button type="button" onClick={() => setDelegSubTab('foreman')} style={{ flex: 1, padding: '0.45rem', borderRadius: theme.radius.md, border: 'none', background: delegSubTab === 'foreman' ? theme.color.dark : theme.color.surfaceAlt, color: delegSubTab === 'foreman' ? theme.color.surface : theme.color.textSecondary, fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
                 <Users size={14} /> Foreman Lain
               </button>
             </div>
@@ -736,7 +764,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                     {MOCK_TECHNICIANS.map(tech => {
                       const isSel = delegTech?.id === tech.id;
                       return (
-                        <div key={tech.id} onClick={() => setDelegTech(tech)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '4px', border: isSel ? `2px solid ${theme.color.dark}` : `1px solid ${theme.color.border}`, background: isSel ? theme.color.bg : theme.color.surface, cursor: 'pointer' }}>
+                        <div key={tech.id} onClick={() => setDelegTech(tech)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: theme.radius.md, border: isSel ? `1.5px solid ${theme.color.dark}` : `1px solid ${theme.color.borderLight}`, background: isSel ? theme.color.bg : theme.color.surface, cursor: 'pointer' }}>
                           <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: isSel ? theme.color.dark : theme.color.surfaceAlt, color: isSel ? theme.color.surface : theme.color.textSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem' }}>{tech.name.charAt(0)}</div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: theme.font.sizeSm, fontWeight: isSel ? 700 : 600, color: theme.color.textPrimary }}>{tech.name}</div>
@@ -751,17 +779,17 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
 
                 <div>
                   <label style={{ display: 'block', fontSize: theme.font.sizeSm, fontWeight: 600, color: theme.color.textSecondary, marginBottom: '0.35rem' }}>Stall Bengkel:</label>
-                  <input style={{ width: '100%', padding: '0.55rem', border: `1px solid ${theme.color.border}`, borderRadius: '4px', fontSize: theme.font.sizeSm, boxSizing: 'border-box' }} value={delegStall} onChange={e => setDelegStall(e.target.value)} placeholder="Stall 01" />
+                  <input style={{ width: '100%', padding: '0.55rem', border: `1px solid ${theme.color.borderLight}`, borderRadius: theme.radius.md, fontSize: theme.font.sizeSm, boxSizing: 'border-box' }} value={delegStall} onChange={e => setDelegStall(e.target.value)} placeholder="Stall 01" />
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: '4px' }} onClick={() => setDelegModal({ visible: false, ticketId: null })}>Batal</button>
-                  <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: '4px' }} onClick={handleConfirmChangeTech}>Ganti Teknisi</button>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: theme.radius.md }} onClick={() => setDelegModal({ visible: false, ticketId: null })}>Batal</button>
+                  <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: theme.radius.md }} onClick={handleConfirmChangeTech}>Ganti Teknisi</button>
                 </div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div style={{ background: theme.color.bg, border: `1px solid ${theme.color.border}`, padding: '0.65rem 0.75rem', borderRadius: '4px', fontSize: theme.font.sizeXs, color: theme.color.textSecondary, display: 'flex', gap: '0.5rem' }}>
+                <div style={{ background: theme.color.bg, border: `1px solid ${theme.color.borderLight}`, padding: '0.65rem 0.75rem', borderRadius: theme.radius.md, fontSize: theme.font.sizeXs, color: theme.color.textSecondary, display: 'flex', gap: '0.5rem' }}>
                   <AlertCircle size={16} color={theme.color.textMuted} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span>Pekerjaan akan masuk ke antrian "Belum Terdistribusi" Foreman tujuan. Foreman penerima wajib assign ulang teknisi dari awal.</span>
                 </div>
@@ -772,7 +800,7 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                     {MOCK_FOREMEN.filter(f => f.name !== foremanCurrentName).map(fm => {
                       const isSel = delegForeman?.id === fm.id;
                       return (
-                        <div key={fm.id} onClick={() => setDelegForeman(fm)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem', borderRadius: '4px', border: isSel ? `2px solid ${theme.color.dark}` : `1px solid ${theme.color.border}`, background: isSel ? theme.color.bg : theme.color.surface, cursor: 'pointer' }}>
+                        <div key={fm.id} onClick={() => setDelegForeman(fm)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem', borderRadius: theme.radius.md, border: isSel ? `1.5px solid ${theme.color.dark}` : `1px solid ${theme.color.borderLight}`, background: isSel ? theme.color.bg : theme.color.surface, cursor: 'pointer' }}>
                           <User size={16} color={isSel ? theme.color.dark : theme.color.textMuted} />
                           <div style={{ flex: 1, fontSize: theme.font.sizeSm, fontWeight: isSel ? 700 : 600, color: isSel ? theme.color.dark : theme.color.textPrimary }}>{fm.name}</div>
                           {isSel && <CheckCircle2 size={16} color={theme.color.dark} />}
@@ -783,8 +811,8 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: '4px' }} onClick={() => setDelegModal({ visible: false, ticketId: null })}>Batal</button>
-                  <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: '4px' }} onClick={handleConfirmDelegateForeman}>Pindahkan ke Foreman</button>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: theme.radius.md }} onClick={() => setDelegModal({ visible: false, ticketId: null })}>Batal</button>
+                  <button type="button" className="btn" style={{ flex: 1.5, backgroundColor: theme.color.dark, color: theme.color.surface, fontWeight: 700, borderRadius: theme.radius.md }} onClick={handleConfirmDelegateForeman}>Pindahkan ke Foreman</button>
                 </div>
               </div>
             )}
@@ -794,14 +822,14 @@ export default function ForemanTab({ tickets, getStatusString, onFinishJob, onUp
 
       {finishConfirmModal.visible && (
         <ModalWrapper>
-          <ModalCard width={360} style={{ borderRadius: '6px', textAlign: 'center' }}>
+          <ModalCard width={360} style={{ borderRadius: theme.radius.lg, textAlign: 'center' }}>
             <h4 style={{ margin: '0 0 0.35rem 0', color: theme.color.textPrimary, fontSize: '1.05rem', fontWeight: 700 }}>Selesaikan Pekerjaan?</h4>
             <p style={{ margin: '0 0 1.25rem 0', fontSize: theme.font.sizeSm, color: theme.color.textMuted }}>
               Tandai <b style={{ color: theme.color.textPrimary }}>{finishConfirmModal.ticket?.licensePlate}</b> sebagai Selesai Servis?
             </p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: '4px' }} onClick={() => setFinishConfirmModal({ visible: false, ticket: null })}>Batal</button>
-              <button type="button" className="btn" style={{ flex: 1.2, backgroundColor: '#16a34a', color: theme.color.surface, fontWeight: 700, borderRadius: '4px' }} onClick={handleConfirmFinishJob}>Ya, Selesai</button>
+              <button type="button" className="btn btn-secondary" style={{ flex: 1, borderRadius: theme.radius.md }} onClick={() => setFinishConfirmModal({ visible: false, ticket: null })}>Batal</button>
+              <button type="button" className="btn" style={{ flex: 1.2, backgroundColor: '#16a34a', color: theme.color.surface, fontWeight: 700, borderRadius: theme.radius.md }} onClick={handleConfirmFinishJob}>Ya, Selesai</button>
             </div>
           </ModalCard>
         </ModalWrapper>

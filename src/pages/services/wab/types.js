@@ -1,7 +1,3 @@
-/**
- * Shape definitions for WAB (Workorder Advisor & Bengkel) module data.
- */
-
 export const TicketStatusEnum = {
   CheckedIn: 0,
   Inspected: 1,
