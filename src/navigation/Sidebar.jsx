@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Car, List, Users, FileText, Wrench, History, ChevronDown, ChevronRight, LayoutDashboard, RefreshCw, Tv, Package, PanelLeft, TrendingUp, User } from 'lucide-react';
+import { useLanguageTheme } from '../utility/context/LanguageThemeContext';
 
 export default function Sidebar({
   isSidebarCollapsed,
@@ -11,6 +12,7 @@ export default function Sidebar({
   ticketsCount,
   historyCount
 }) {
+  const { t } = useLanguageTheme();
   const [isWabOpen, setIsWabOpen] = useState(true);
   const [isDrhOpen, setIsDrhOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -55,6 +57,8 @@ export default function Sidebar({
   const isWabParentActive = isEffectiveCollapsed && isWabTab;
   const isDrhParentActive = isEffectiveCollapsed && isDrhTab;
 
+  const logoSrc = isEffectiveCollapsed ? '/assets/logos/s_logo.svg' : '/assets/logos/suzuki_logo.svg';
+
   return (
     <aside
       className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isSidebarCollapsed && isHovered ? 'hover-expanded' : ''}`}
@@ -73,34 +77,32 @@ export default function Sidebar({
         }}
       >
         <img
-          src={isEffectiveCollapsed ? "/assets/logos/s_logo.svg" : "/assets/logos/suzuki_logo.svg"}
+          src={logoSrc}
           alt="Suzuki Logo"
-          style={{ height: isEffectiveCollapsed ? '36px' : '48px', objectFit: 'contain', flexShrink: 0 }}
+          style={{
+            height: isEffectiveCollapsed ? '36px' : '58px',
+            maxHeight: '64px',
+            objectFit: 'contain',
+            flexShrink: 0,
+          }}
         />
         {setIsSidebarCollapsed && (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsSidebarCollapsed(!isSidebarCollapsed);
-            }}
-            title={isSidebarCollapsed ? "Sematkan Sidebar" : "Tutup Sidebar"}
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             style={{
-              background: 'transparent',
+              background: 'none',
               border: 'none',
-              padding: '0.35rem',
               cursor: 'pointer',
-              color: '#0f172a',
               display: isEffectiveCollapsed ? 'none' : 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              outline: 'none',
+              padding: '0.2rem',
               borderRadius: '6px',
-              marginLeft: 'auto',
               flexShrink: 0
             }}
           >
-            <PanelLeft size={18} color="#0f172a" />
+            <PanelLeft size={18} color="#676767ff" />
           </button>
         )}
       </div>
@@ -110,11 +112,11 @@ export default function Sidebar({
           className={`sidebar-nav-item ${isWabParentActive ? 'active' : ''}`}
           onClick={handleToggleWab}
           style={{ cursor: 'pointer' }}
-          title="WAB System"
+          title={t('navWabSystem')}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <Car size={17} color="#0f172a" />
-            <span className="sidebar-label-text" style={{ fontWeight: 700 }}>WAB System</span>
+            <span className="sidebar-label-text" style={{ fontWeight: 700 }}>{t('navWabSystem')}</span>
           </div>
           <span className="sidebar-arrow" style={{ fontSize: '0.75rem', color: '#64748b' }}>
             {isWabOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -123,53 +125,51 @@ export default function Sidebar({
 
         <div className={`sidebar-sub-nav ${isWabOpen && !isEffectiveCollapsed ? 'open' : ''}`}>
           {(currentUserRole === 'Security' || currentUserRole === 'Admin') && (
-            <div className={`sidebar-sub-item ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => handleSelectTab('bookings')} title="List Booking">
+            <div className={`sidebar-sub-item ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => handleSelectTab('bookings')} title={t('navBooking')}>
               <List size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'bookings' ? 1 : 0.6, flexShrink: 0 }} />
-              <span className="sidebar-label-text">List Booking</span>
+              <span className="sidebar-label-text">{t('navBooking')}</span>
               <span className="sidebar-count-badge" style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.7 }}>({bookingsCount})</span>
             </div>
           )}
 
           {(currentUserRole === 'Security' || currentUserRole === 'ServiceAdvisor' || currentUserRole === 'Admin') && (
-            <div className={`sidebar-sub-item ${activeTab === 'daftar-tamu' ? 'active' : ''}`} onClick={() => handleSelectTab('daftar-tamu')} title="Daftar Tamu">
+            <div className={`sidebar-sub-item ${activeTab === 'daftar-tamu' ? 'active' : ''}`} onClick={() => handleSelectTab('daftar-tamu')} title={t('navDaftarTamu')}>
               <Users size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'daftar-tamu' ? 1 : 0.6, flexShrink: 0 }} />
-              <span className="sidebar-label-text">Daftar Tamu</span>
+              <span className="sidebar-label-text">{t('navDaftarTamu')}</span>
               <span className="sidebar-count-badge" style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.7 }}>({ticketsCount})</span>
             </div>
           )}
 
           {(currentUserRole === 'ServiceAdvisor' || currentUserRole === 'Admin') && (
-            <div className={`sidebar-sub-item ${activeTab === 'wab-form' ? 'active' : ''}`} onClick={() => handleSelectTab('wab-form')} title="Form WAB">
+            <div className={`sidebar-sub-item ${activeTab === 'wab-form' ? 'active' : ''}`} onClick={() => handleSelectTab('wab-form')} title={t('navFormWAB')}>
               <FileText size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'wab-form' ? 1 : 0.6, flexShrink: 0 }} />
-              <span className="sidebar-label-text">Form WAB</span>
+              <span className="sidebar-label-text">{t('navFormWAB')}</span>
             </div>
           )}
 
           {(currentUserRole === 'Foreman' || currentUserRole === 'Admin') && (
-            <div className={`sidebar-sub-item ${activeTab === 'foreman' ? 'active' : ''}`} onClick={() => handleSelectTab('foreman')} title="Workshop Board">
+            <div className={`sidebar-sub-item ${activeTab === 'foreman' ? 'active' : ''}`} onClick={() => handleSelectTab('foreman')} title={t('navForeman')}>
               <Wrench size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'foreman' ? 1 : 0.6, flexShrink: 0 }} />
-              <span className="sidebar-label-text">Workshop Board</span>
+              <span className="sidebar-label-text">{t('navForeman')}</span>
             </div>
           )}
 
           {(currentUserRole === 'CCM' || currentUserRole === 'Admin') && (
-            <div className={`sidebar-sub-item ${activeTab === 'rka' ? 'active' : ''}`} onClick={() => handleSelectTab('rka')} title="RKA Monitoring">
+            <div className={`sidebar-sub-item ${activeTab === 'rka' ? 'active' : ''}`} onClick={() => handleSelectTab('rka')} title={t('navRKA')}>
               <TrendingUp size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'rka' ? 1 : 0.6, flexShrink: 0 }} />
-              <span className="sidebar-label-text">RKA Monitoring</span>
+              <span className="sidebar-label-text">{t('navRKA')}</span>
             </div>
           )}
 
-          <div className={`sidebar-sub-item ${activeTab === 'tv-display' ? 'active' : ''}`} onClick={() => handleSelectTab('tv-display')} title="TV Display Lounge">
+          <div className={`sidebar-sub-item ${activeTab === 'tv-display' ? 'active' : ''}`} onClick={() => handleSelectTab('tv-display')} title={t('navTVDisplay')}>
             <Tv size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'tv-display' ? 1 : 0.6, flexShrink: 0 }} />
-            <span className="sidebar-label-text">TV Display Lounge</span>
+            <span className="sidebar-label-text">{t('navTVDisplay')}</span>
           </div>
 
-          <div className={`sidebar-sub-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => handleSelectTab('history')} title="Riwayat">
+          <div className={`sidebar-sub-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => handleSelectTab('history')} title={t('navHistory')}>
             <History size={14} style={{ marginRight: '0.5rem', opacity: activeTab === 'history' ? 1 : 0.6, flexShrink: 0 }} />
             <span className="sidebar-label-text">
-              {currentUserRole === 'Security' ? 'Riwayat Check-Out' :
-                currentUserRole === 'ServiceAdvisor' ? 'Riwayat WAB' :
-                  currentUserRole === 'Foreman' ? 'Riwayat Workshop' : 'Riwayat Sistem'}
+              {t('navHistory')}
             </span>
             <span className="sidebar-count-badge" style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.7 }}>({historyCount})</span>
           </div>

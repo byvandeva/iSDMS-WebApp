@@ -75,9 +75,18 @@ export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], hi
     } catch { return '-'; }
   };
 
-  const securityHistory = filterBySearch(tickets.filter(t => t.status === 'CheckedOut' || t.status === '8'));
-  const saHistory = filterBySearch(wabHistory.length > 0 ? wabHistory : tickets.filter(t => t.wabSubmitted || t.status === 'Inspected' || t.status === 'WabDone'));
-  const foremanHistory = filterBySearch(tickets.filter(t => ['ServiceCompleted', 'PreHandoverReady', 'HandoverCompleted', 'CheckedOut', '5', '6', '7', '8'].includes(String(t.status))));
+  const checkedOutInTickets = tickets.filter(t => t.status === 'CheckedOut' || t.status === '8');
+  const securityHistory = filterBySearch([...historyTickets, ...checkedOutInTickets]);
+
+  const saHistory = filterBySearch(
+    tickets.filter(t => t.wabSubmitted || t.status === 'Inspected' || t.status === 'WabDone')
+  );
+
+  const foremanStatuses = ['ServiceCompleted', 'PreHandoverReady', 'HandoverCompleted', 'CheckedOut', '5', '6', '7', '8'];
+  const foremanHistory = filterBySearch([
+    ...tickets.filter(t => foremanStatuses.includes(String(t.status))),
+    ...historyTickets,
+  ]);
 
   const currentList = activeRoleTab === 'security' ? securityHistory : activeRoleTab === 'sa' ? saHistory : foremanHistory;
   const totalPages = Math.ceil(currentList.length / PAGE_SIZE);
@@ -195,7 +204,7 @@ export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], hi
                   <td>{formatTime(t.inspectionTime || t.checkInTime)}</td>
                   <td><StatusBadge status="Inspected" /></td>
                   <td style={{ textAlign: 'center' }}>
-                    <button className="btn btn-sm" style={{ backgroundColor: theme.color.dark, color: theme.color.surface, border: 'none' }} onClick={() => onSelectTicket?.(t)}>Lihat WAB</button>
+                    <button className="btn btn-sm" style={{ backgroundColor: theme.color.dark, color: theme.color.surface, border: 'none' }} onClick={() => onSelectTicket?.(t)}>Detail</button>
                   </td>
                 </tr>
               ))}

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { FileText } from 'lucide-react';
 import { useWabForm } from '../../../../utility/context/useWabForm';
 import VehicleInspector from '../components/VehicleInspector';
-import DamageLoggerModal from '../modals/DamageLoggerModal';
 import InspectionSummary from '../components/InspectionSummary';
 import SignaturePad from '../components/SignaturePad';
 
@@ -526,7 +525,7 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                   cursor: 'pointer',
                 }}
               >
-                Continue
+                Selanjutnya
               </button>
             </form>
           </div>
@@ -632,7 +631,7 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                 Kembali
               </button>
               <button className="btn" style={{ flex: 2, backgroundColor: '#0f172a', color: '#ffffff', padding: '0.75rem', fontWeight: 'bold' }} onClick={() => setWabStep(3)}>
-                Continue
+                Selanjutnya
               </button>
             </div>
           </div>
@@ -680,7 +679,7 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                 Kembali
               </button>
               <button className="btn" style={{ flex: 2, backgroundColor: '#0f172a', color: '#ffffff', padding: '0.75rem', fontWeight: 'bold' }} onClick={() => setWabStep(4)}>
-                Continue
+                Selanjutnya
               </button>
             </div>
           </div>
@@ -789,7 +788,7 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
               Kembali
             </button>
             <button className="btn" style={{ flex: 2, backgroundColor: '#0f172a', color: '#ffffff', padding: '0.75rem', fontWeight: 'bold' }} onClick={() => setWabStep(5)}>
-              Continue
+              Selanjutnya
             </button>
           </div>
         </div>
@@ -998,15 +997,13 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                 Kembali
               </button>
               <button className="btn" style={{ flex: 2, backgroundColor: '#16a34a', color: '#ffffff', padding: '0.85rem', fontWeight: 800, fontSize: '0.95rem' }} onClick={handleFinalizeWab}>
-                ✓ Kirim &amp; Finalisasi Form WAB 5-Step
+                Submit
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal Logger Titik Kerusakan */}
-      <DamageLoggerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveDamage} context={selectedContext} />
     </div>
   );
 }

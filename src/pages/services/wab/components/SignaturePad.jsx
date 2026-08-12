@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { RotateCcw, Check } from 'lucide-react';
 
-export default function SignaturePad({ onSignChange }) {
+export default function SignaturePad({ onSignChange, onSave }) {
+  const notify = onSave || onSignChange;
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSigned, setHasSigned] = useState(false);
@@ -63,8 +64,8 @@ export default function SignaturePad({ onSignChange }) {
     ctx.lineTo(x, y);
     ctx.stroke();
 
-    if (onSignChange) {
-      onSignChange(canvas.toDataURL());
+    if (notify) {
+      notify(canvas.toDataURL());
     }
   };
 
@@ -72,8 +73,8 @@ export default function SignaturePad({ onSignChange }) {
     if (!isDrawing) return;
     setIsDrawing(false);
     const canvas = canvasRef.current;
-    if (canvas && onSignChange) {
-      onSignChange(canvas.toDataURL());
+    if (canvas && notify) {
+      notify(canvas.toDataURL());
     }
   };
 
@@ -83,8 +84,8 @@ export default function SignaturePad({ onSignChange }) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasSigned(false);
-    if (onSignChange) {
-      onSignChange(null);
+    if (notify) {
+      notify(null);
     }
   };
 
