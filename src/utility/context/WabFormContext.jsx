@@ -14,17 +14,23 @@ const INITIAL_FUNCTIONAL_INSPECTIONS = [
   { id: 'brake', name: 'Sistem Rem / Minyak Rem', status: 'OK', notes: '' }
 ];
 
-const INITIAL_EXTERIOR_TEXT_NOTES = [
-  { id: '1', category: 'Spion', note: '' },
-  { id: '2', category: 'Ban Serep', note: '' }
-];
+const INITIAL_EXTERIOR_TEXT_NOTES = [];
 
 export function WabFormProvider({ children }) {
   const [wabStep, setWabStep] = useState(1);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [saCustomerName, setSaCustomerName] = useState('');
   const [saCustomerPhone, setSaCustomerPhone] = useState('');
+  const [saCustomerEmail, setSaCustomerEmail] = useState('');
+  const [saDriverName, setSaDriverName] = useState('');
+  const [saIdentityNo, setSaIdentityNo] = useState('');
   const [saCustomerAddress, setSaCustomerAddress] = useState('');
+  const [saPoliceRegNo, setSaPoliceRegNo] = useState('');
+  const [saVehicleModel, setSaVehicleModel] = useState('');
+  const [saOdometer, setSaOdometer] = useState('');
+  const [saJobType, setSaJobType] = useState('Periodic Service');
+  const [saStallCode, setSaStallCode] = useState('STALL-01');
+  const [saServiceAdvisor, setSaServiceAdvisor] = useState('58970');
   const [customerComplaints, setCustomerComplaints] = useState('');
   const [signatureData, setSignatureData] = useState(null);
   const [saSignatureData, setSaSignatureData] = useState(null);
@@ -100,7 +106,16 @@ export function WabFormProvider({ children }) {
     setSelectedTicket(null);
     setSaCustomerName('');
     setSaCustomerPhone('');
+    setSaCustomerEmail('');
+    setSaDriverName('');
+    setSaIdentityNo('');
     setSaCustomerAddress('');
+    setSaPoliceRegNo('');
+    setSaVehicleModel('');
+    setSaOdometer('');
+    setSaJobType('Periodic Service');
+    setSaStallCode('STALL-01');
+    setSaServiceAdvisor('58970');
     setCustomerComplaints('');
     setSignatureData(null);
     setSaSignatureData(null);
@@ -117,7 +132,16 @@ export function WabFormProvider({ children }) {
       selectedTicket, setSelectedTicket,
       saCustomerName, setSaCustomerName,
       saCustomerPhone, setSaCustomerPhone,
+      saCustomerEmail, setSaCustomerEmail,
+      saDriverName, setSaDriverName,
+      saIdentityNo, setSaIdentityNo,
       saCustomerAddress, setSaCustomerAddress,
+      saPoliceRegNo, setSaPoliceRegNo,
+      saVehicleModel, setSaVehicleModel,
+      saOdometer, setSaOdometer,
+      saJobType, setSaJobType,
+      saStallCode, setSaStallCode,
+      saServiceAdvisor, setSaServiceAdvisor,
       customerComplaints, setCustomerComplaints,
       signatureData, setSignatureData,
       saSignatureData, setSaSignatureData,

@@ -6,7 +6,11 @@ export default function VehicleInspector({ onPartClick, damages = [], focusFrame
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredDamage, setHoveredDamage] = useState(null);
   const containerRef = useRef(null);
+
+  const isDraggingRef = useRef(false);
   const dragStartX = useRef(0);
+  const hasMovedRef = useRef(false);
+  const dragStartPosRef = useRef({ x: 0, y: 0 });
 
   const TOTAL_FRAMES = 36;
 
@@ -33,56 +37,68 @@ export default function VehicleInspector({ onPartClick, damages = [], focusFrame
     });
   }, [images]);
 
-  const hasMovedRef = useRef(false);
-  const dragStartPosRef = useRef({ x: 0, y: 0 });
-
   const handlePointerDown = (e) => {
+    isDraggingRef.current = true;
     setIsDragging(true);
     hasMovedRef.current = false;
-    const posX = e.clientX || (e.touches && e.touches[0].clientX);
-    const posY = e.clientY || (e.touches && e.touches[0].clientY);
+
+    if (e.currentTarget && e.currentTarget.setPointerCapture) {
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch (err) {
+        // Fallback for older browsers
+      }
+    }
+
+    const posX = e.clientX;
+    const posY = e.clientY;
     dragStartX.current = posX;
     dragStartPosRef.current = { x: posX, y: posY };
   };
 
   const handlePointerMove = (e) => {
-    if (!isDragging) return;
+    if (!isDraggingRef.current) return;
 
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    const clientX = e.clientX;
+    const clientY = e.clientY;
 
     if (dragStartPosRef.current) {
       const dist = Math.hypot(clientX - dragStartPosRef.current.x, clientY - dragStartPosRef.current.y);
-      if (dist > 5) {
+      if (dist > 4) {
         hasMovedRef.current = true;
       }
     }
 
     const deltaX = clientX - dragStartX.current;
-    const pixelsPerFrame = 7;
+    const pixelsPerFrame = 6;
 
-    if (Math.abs(deltaX) > pixelsPerFrame) {
+    if (Math.abs(deltaX) >= pixelsPerFrame) {
       const framesToMove = Math.floor(deltaX / pixelsPerFrame);
-      let newFrame = (currentFrame - framesToMove) % TOTAL_FRAMES;
-      if (newFrame < 0) newFrame += TOTAL_FRAMES;
-
-      setCurrentFrame(newFrame);
+      setCurrentFrame(prev => {
+        let newFrame = (prev - framesToMove) % TOTAL_FRAMES;
+        if (newFrame < 0) newFrame += TOTAL_FRAMES;
+        return newFrame;
+      });
       dragStartX.current = clientX;
     }
   };
 
-  const handlePointerUp = () => {
-    setTimeout(() => {
-      setIsDragging(false);
-    }, 50);
+  const handlePointerUp = (e) => {
+    if (e.currentTarget && e.currentTarget.releasePointerCapture && e.pointerId) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch (err) {}
+    }
+    isDraggingRef.current = false;
+    setIsDragging(false);
   };
 
   const handleCanvasDoubleClick = (e) => {
     if (hasMovedRef.current) return;
     if (!containerRef.current) return;
 
-    const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
-    const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+    const clientX = e.clientX;
+    const clientY = e.clientY;
 
     if (clientX === undefined || clientY === undefined) return;
 
@@ -145,13 +161,10 @@ export default function VehicleInspector({ onPartClick, damages = [], focusFrame
 
       <div
         ref={containerRef}
-        onMouseDown={handlePointerDown}
-        onMouseMove={handlePointerMove}
-        onMouseUp={handlePointerUp}
-        onMouseLeave={handlePointerUp}
-        onTouchStart={handlePointerDown}
-        onTouchMove={handlePointerMove}
-        onTouchEnd={handlePointerUp}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         onDoubleClick={handleCanvasDoubleClick}
         style={{
           width: '100%',
@@ -163,7 +176,9 @@ export default function VehicleInspector({ onPartClick, damages = [], focusFrame
           overflow: 'hidden',
           cursor: isDragging ? 'grabbing' : 'crosshair',
           touchAction: 'none',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
         }}
       >
         {images.map((src, index) => (
@@ -171,6 +186,7 @@ export default function VehicleInspector({ onPartClick, damages = [], focusFrame
             key={index}
             src={src}
             alt={`Suzuki XL7 Frame ${index}`}
+            draggable={false}
             style={{
               position: 'absolute',
               top: '50%',
@@ -180,7 +196,9 @@ export default function VehicleInspector({ onPartClick, damages = [], focusFrame
               height: '92%',
               objectFit: 'contain',
               opacity: currentFrame === index ? 1 : 0,
-              pointerEvents: 'none'
+              pointerEvents: 'none',
+              userSelect: 'none',
+              WebkitUserDrag: 'none',
             }}
           />
         ))}

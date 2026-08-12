@@ -145,7 +145,6 @@ export default function GuestListTab({
         <table className="enterprise-table" style={{ border: 'none', borderRadius: 0 }}>
           <thead>
             <tr>
-              <th style={{ width: '40px' }}>No</th>
               <th style={thSortStyle} onClick={() => handleSortToggle('queue')}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                   No. Antrian {renderSortIcon('queue')}
@@ -167,14 +166,13 @@ export default function GuestListTab({
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem 2rem' }}>
+                <td colSpan={8} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem 2rem' }}>
                   Tidak ada tamu yang cocok dengan kriteria pencarian/filter.
                 </td>
               </tr>
             ) : (
               paged.map((t, idx) => (
                 <tr key={t.ticketId || idx}>
-                  <td>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
                   <td>
                     {(t.queueNumber || t.bookingNo || t.sdmsBookingId)
                       ? <span className="badge-queue">{t.queueNumber || t.bookingNo || t.sdmsBookingId}</span>

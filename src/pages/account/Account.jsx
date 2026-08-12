@@ -150,8 +150,8 @@ export default function Account({ currentUserRole = 'ServiceAdvisor', onLogout }
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', width: '100%' }}>
           <div style={{ background: '#ffffff', padding: '1.15rem 1.25rem', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
-            <div style={{ fontSize: '0.725rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.35rem' }}>ID PEGAWAI SDMS</div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>SDMS-EMP-6006401</div>
+            <div style={{ fontSize: '0.725rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.35rem' }}>ID PEGAWAI</div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>EMP-6006401</div>
           </div>
 
           <div style={{ background: '#ffffff', padding: '1.15rem 1.25rem', borderRadius: '10px', border: '1px solid #cbd5e1' }}>

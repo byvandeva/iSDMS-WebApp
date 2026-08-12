@@ -16,6 +16,10 @@ import GuestListTab from './pages/services/wab/tabs/Guests';
 import HistoryTab from './pages/services/wab/tabs/History';
 import ForemanTab from './pages/services/wab/tabs/Foreman';
 import FormWAB from './pages/services/wab/tabs/FormWAB';
+import VehicleInspector from './pages/services/wab/components/VehicleInspector';
+import InspectionSummary from './pages/services/wab/components/InspectionSummary';
+import DamageLoggerModal from './pages/services/wab/modals/DamageLoggerModal';
+
 import WalkInModal from './pages/services/wab/modals/WalkInModal';
 import EditTicketModal from './pages/services/wab/modals/EditTicketModal';
 import CheckOutModal from './pages/services/wab/modals/CheckOutModal';
@@ -257,7 +261,7 @@ function AppShell() {
 
     try {
       await submitWabForm({ ticketId: selectedTicket.ticketId, customerName: saCustomerName, customerPhone: saCustomerPhone, customerComplaints, damages, exteriorTextNotes: exteriorTextNotes.filter(n => n.note.trim() !== ''), customerSignatureUrl: "data:image/png;base64,sample_signature_canvas_data" });
-    } catch (e) {}
+    } catch (e) { }
 
     setTickets(prev => prev.map(t => t.ticketId === selectedTicket.ticketId ? { ...t, status: 'Inspected', wabSubmitted: true, customerName: saCustomerName, customerPhone: saCustomerPhone, customerComplaints, damages } : t));
     showToast('Form WAB Terkirim!', 'Data WAB 5-step berhasil dikirim & diteruskan ke Foreman.');
@@ -281,7 +285,7 @@ function AppShell() {
 
     try {
       await updateForemanTracking(data);
-    } catch (e) {}
+    } catch (e) { }
 
     setTickets(prev => prev.map(t => {
       if (t.ticketId === data.ticketId) {
@@ -305,7 +309,7 @@ function AppShell() {
 
     try {
       await updateWorkshopStatus({ ticketId, status: 'ServiceCompleted' });
-    } catch (e) {}
+    } catch (e) { }
 
     setTickets(prev => prev.map(t => {
       if (t.ticketId === ticketId) {
@@ -388,14 +392,14 @@ function AppShell() {
                 <span>/</span>
                 <span style={{ color: '#0f172a', fontWeight: 700 }}>
                   {activeTab === 'bookings' ? 'List Booking' :
-                   activeTab === 'daftar-tamu' ? 'Daftar Tamu' :
-                   activeTab === 'wab-form' ? 'Form WAB' :
-                   activeTab === 'foreman' ? 'Workshop Board' :
-                   activeTab === 'rka' ? 'RKA Monitoring' :
-                   activeTab === 'tv-display' ? 'TV Display Lounge' :
-                   activeTab === 'account' ? 'Profil Pengguna' :
-                   activeTab === 'sparepart' ? 'Katalog & Inventory' :
-                   activeTab === 'history' ? (currentUserRole === 'Security' ? 'Riwayat Check-Out' : currentUserRole === 'ServiceAdvisor' ? 'Riwayat WAB' : currentUserRole === 'Foreman' ? 'Riwayat Workshop' : 'Riwayat Sistem') : 'Dashboard'}
+                    activeTab === 'daftar-tamu' ? 'Daftar Tamu' :
+                      activeTab === 'wab-form' ? 'Form WAB' :
+                        activeTab === 'foreman' ? 'Workshop Board' :
+                          activeTab === 'rka' ? 'RKA Monitoring' :
+                            activeTab === 'tv-display' ? 'TV Display Lounge' :
+                              activeTab === 'account' ? 'Profil Pengguna' :
+                                activeTab === 'sparepart' ? 'Katalog & Inventory' :
+                                  activeTab === 'history' ? (currentUserRole === 'Security' ? 'Riwayat Check-Out' : currentUserRole === 'ServiceAdvisor' ? 'Riwayat WAB' : currentUserRole === 'Foreman' ? 'Riwayat Workshop' : 'Riwayat Sistem') : 'Dashboard'}
                 </span>
               </div>
             </div>
@@ -526,6 +530,7 @@ function AppShell() {
       <EditTicketModal editingTicket={editingTicket} editForm={editForm} setEditForm={setEditForm} onClose={() => setEditingTicket(null)} onSave={handleSaveEditPurpose} />
       <CheckOutModal checkoutTargetTicket={checkoutTargetTicket} onClose={() => setCheckoutTargetTicket(null)} onConfirm={handleConfirmCheckOutWeb} />
       <WabDetailModal isOpen={Boolean(selectedWabDetailTicket)} ticket={selectedWabDetailTicket} onClose={() => setSelectedWabDetailTicket(null)} />
+      <DamageLoggerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveDamage} context={selectedContext} />
 
       {successCheckInModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000 }}>
@@ -573,7 +578,7 @@ function AppShell() {
               <span style={{ fontSize: '0.825rem', color: '#64748b', fontWeight: 600 }}>Total Titik Kerusakan: <b style={{ color: '#0f172a' }}>{damages.length} Titik</b></span>
               <div style={{ display: 'flex', gap: '0.6rem' }}>
                 <button type="button" className="btn btn-secondary" style={{ padding: '0.55rem 1.25rem', fontWeight: 600, fontSize: '0.85rem' }} onClick={() => setShowExteriorModal(false)}>Batal</button>
-                <button type="button" className="btn" style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '0.55rem 1.25rem', fontWeight: 700, fontSize: '0.85rem' }} onClick={handleSaveExteriorInspection}>Simpan Hasil Inspeksi 360°</button>
+                <button type="button" className="btn" style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '0.55rem 1.25rem', fontWeight: 700, fontSize: '0.85rem' }} onClick={handleSaveExteriorInspection}>Simpan</button>
               </div>
             </div>
           </div>
@@ -587,7 +592,7 @@ export default function App() {
   const [activeRoleForTabs, setActiveRoleForTabs] = useState('bookings');
 
   return (
-    <AuthProvider onRoleChange={() => {}}>
+    <AuthProvider onRoleChange={() => { }}>
       <AppDataProvider>
         <WabFormProvider>
           <AppShell />

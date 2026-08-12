@@ -41,7 +41,7 @@ export default function StatusBoard({ tickets }) {
         borderBottom: '2px solid #0054a6',
       }}>
         <div style={{ padding: '0.75rem 1rem', textAlign: 'left', borderRight: '1px solid #334155' }}>
-          INFO SERVICE &amp; JANJI SELESAI
+          INFO SERVICE
         </div>
         {TIME_SLOTS.map(slot => (
           <div key={slot} style={{ padding: '0.75rem 0.25rem', borderRight: '1px solid #334155', letterSpacing: '0.5px' }}>

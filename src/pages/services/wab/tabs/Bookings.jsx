@@ -103,7 +103,6 @@ export default function BookingListTab({ bookings, onOpenWalkInModal, onCheckInF
         <table className="enterprise-table" style={{ border: 'none', borderRadius: 0 }}>
           <thead>
             <tr>
-              <th style={{ width: '40px' }}>No</th>
               <th style={thSortStyle} onClick={() => handleSortToggle('booking')}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                   Antrian {renderSortIcon('booking')}
@@ -127,14 +126,13 @@ export default function BookingListTab({ bookings, onOpenWalkInModal, onCheckInF
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem 2rem' }}>
+                <td colSpan={6} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem 2rem' }}>
                   Tidak ada booking yang cocok.
                 </td>
               </tr>
             ) : (
               paged.map((b, idx) => (
                 <tr key={b.sdmsBookingId || b.bookingNo || idx}>
-                  <td>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
                   <td><span className="badge-queue">{b.bookingNo || b.sdmsBookingId}</span></td>
                   <td style={{ fontWeight: 'bold' }}>{b.customerName}</td>
                   <td style={{ color: theme.color.textPrimary, fontWeight: 'bold' }}>{b.policeRegNo || b.licensePlate}</td>

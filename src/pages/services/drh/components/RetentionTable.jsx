@@ -15,7 +15,6 @@ export default function RetentionTable({ data, onRowClick }) {
       <table className="drh-table">
         <thead>
           <tr>
-            <th className="drh-th drh-th--no">No</th>
             <th className="drh-th">Pelanggan</th>
             <th className="drh-th">No. SPK</th>
             <th className="drh-th">Kendaraan</th>
@@ -31,7 +30,6 @@ export default function RetentionTable({ data, onRowClick }) {
             <RetentionRow
               key={item.retentionNo}
               item={item}
-              index={index}
               onRowClick={onRowClick}
             />
           ))}
@@ -41,12 +39,11 @@ export default function RetentionTable({ data, onRowClick }) {
   );
 }
 
-function RetentionRow({ item, index, onRowClick }) {
+function RetentionRow({ item, onRowClick }) {
   const isConnected = item.isConfirmed === '1';
 
   return (
     <tr className="drh-tr">
-      <td className="drh-td drh-td--center">{index + 1}</td>
       <td className="drh-td">
         <div className="drh-td-primary">{item.customerName}</div>
         <div className="drh-td-secondary">{item.customerCode} · {item.phoneNo}</div>
@@ -77,7 +74,7 @@ function RetentionRow({ item, index, onRowClick }) {
         <div className="drh-td-primary">{item.cannotCallCode}</div>
         <div className="drh-td-secondary">{item.reason || '-'}</div>
       </td>
-      <td className="drh-td drh-td--center">
+      <td className="drh-td drh-td--center drh-td--action">
         <button
           type="button"
           className="drh-detail-btn"

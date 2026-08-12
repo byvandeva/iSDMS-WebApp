@@ -11,8 +11,8 @@ const PAGE_SIZE = 10;
 export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], historyTickets = [], wabHistory = [], onSelectTicket }) {
   const [roleTab, setRoleTab] = useState(
     currentUserRole === 'Security' ? 'security' :
-    currentUserRole === 'ServiceAdvisor' ? 'sa' :
-    currentUserRole === 'Foreman' ? 'foreman' : 'security'
+      currentUserRole === 'ServiceAdvisor' ? 'sa' :
+        currentUserRole === 'Foreman' ? 'foreman' : 'security'
   );
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPurpose, setFilterPurpose] = useState('All');
@@ -138,7 +138,6 @@ export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], hi
           <table className="enterprise-table" style={{ border: 'none', borderRadius: 0 }}>
             <thead>
               <tr>
-                <th style={{ width: '40px' }}>No</th>
                 <th>Plat Nomor</th>
                 <th>Nama Customer</th>
                 <th>No. Telepon</th>
@@ -150,10 +149,9 @@ export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], hi
             </thead>
             <tbody>
               {paged.length === 0 ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem' }}>Belum ada riwayat rilis keluar gerbang.</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem' }}>Belum ada riwayat.</td></tr>
               ) : paged.map((h, idx) => (
                 <tr key={h.ticketId || idx}>
-                  <td>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
                   <td style={{ fontWeight: 'bold', color: theme.color.textPrimary }}>{h.policeRegNo || h.licensePlate}</td>
                   <td>{h.customerName || h.wabCustomerName || '-'}</td>
                   <td>{h.telponNo || h.customerPhone || '-'}</td>
@@ -174,7 +172,6 @@ export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], hi
           <table className="enterprise-table" style={{ border: 'none', borderRadius: 0 }}>
             <thead>
               <tr>
-                <th style={{ width: '40px' }}>No</th>
                 <th>No. Antrian</th>
                 <th>Plat Nomor</th>
                 <th>Nama Customer</th>
@@ -187,10 +184,9 @@ export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], hi
             </thead>
             <tbody>
               {paged.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem' }}>Belum ada riwayat Form WAB 5-Step disubmit.</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem' }}>Belum ada riwayat Form WAB 5-Step disubmit.</td></tr>
               ) : paged.map((t, idx) => (
                 <tr key={t.ticketId || idx}>
-                  <td>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
                   <td><span className="badge-queue">{t.queueNumber || t.bookingNo || t.sdmsBookingId || 'Non-Q'}</span></td>
                   <td style={{ fontWeight: 'bold', color: theme.color.textPrimary }}>{t.policeRegNo || t.licensePlate}</td>
                   <td>{t.customerName || t.wabCustomerName || '-'}</td>
@@ -214,7 +210,6 @@ export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], hi
           <table className="enterprise-table" style={{ border: 'none', borderRadius: 0 }}>
             <thead>
               <tr>
-                <th style={{ width: '40px' }}>No</th>
                 <th>No. Antrian</th>
                 <th>Plat Nomor</th>
                 <th>Nama Customer</th>
@@ -228,10 +223,9 @@ export default function HistoryTab({ currentUserRole = 'Admin', tickets = [], hi
             </thead>
             <tbody>
               {paged.length === 0 ? (
-                <tr><td colSpan={10} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem' }}>Belum ada riwayat pekerjaan servis selesai.</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: 'center', color: theme.color.textMuted, padding: '3rem' }}>Belum ada riwayat pekerjaan servis selesai.</td></tr>
               ) : paged.map((t, idx) => (
                 <tr key={t.ticketId || idx}>
-                  <td>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
                   <td><span className="badge-queue">{t.queueNumber || t.bookingNo || t.sdmsBookingId || 'Non-Q'}</span></td>
                   <td style={{ fontWeight: 'bold', color: theme.color.textPrimary }}>{t.policeRegNo || t.licensePlate}</td>
                   <td>{t.customerName || t.wabCustomerName || '-'}</td>
