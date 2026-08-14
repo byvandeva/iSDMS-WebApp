@@ -1,9 +1,21 @@
-import React, { useEffect } from 'react';
-import { FileText } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { FileText, ChevronDown, Check, CheckCircle2, AlertTriangle, XCircle, CheckCheck } from 'lucide-react';
 import { useWabForm } from '../../../../utility/context/useWabForm';
 import VehicleInspector from '../components/VehicleInspector';
 import InspectionSummary from '../components/InspectionSummary';
 import SignaturePad from '../components/SignaturePad';
+
+const SERVICE_OPTIONS = [
+  { value: 'Paket Servis Periodic (Berkala)', label: 'Paket Servis Periodic (Berkala)' },
+  { value: 'Paket 10.000 KM', label: 'Paket 10.000 KM' },
+  { value: 'Paket 20.000 KM', label: 'Paket 20.000 KM' },
+  { value: 'Paket 40.000 KM', label: 'Paket 40.000 KM' },
+  { value: 'Light Repair (Perbaikan Ringan)', label: 'Light Repair (Perbaikan Ringan)' },
+  { value: 'General Repair (Perbaikan Umum)', label: 'General Repair (Perbaikan Umum)' },
+  { value: 'Body & Paint (Perbaikan Bodi)', label: 'Body & Paint (Perbaikan Bodi)' },
+  { value: 'Safety Check & Inspection', label: 'Safety Check & Inspection' },
+  { value: 'Custom Service Request', label: 'Custom Service Request (Ketik Sendiri)' },
+];
 
 export default function FormWAB({ getPurposeString, setActiveTab, showToast, handleFinalizeWab }) {
   const {
@@ -43,6 +55,8 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
     handleDamageClick,
     handleEditDamage,
   } = useWabForm();
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (selectedTicket) {
@@ -126,10 +140,10 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {[
-            { step: 1, title: 'Data Pelanggan' },
-            { step: 2, title: 'Data Kendaraan' },
-            { step: 3, title: 'Keluhan Customer' },
-            { step: 4, title: 'Inspeksi 360°' },
+            { step: 1, title: 'Data Pelanggan & Kendaraan' },
+            { step: 2, title: 'Jenis Servis & Keluhan' },
+            { step: 3, title: 'Inspeksi Fungsional' },
+            { step: 4, title: 'Inspeksi Bodi 360°' },
             { step: 5, title: 'Tanda Tangan & Final' }
           ].map((item, idx) => {
             const isActive = wabStep === item.step;
@@ -260,13 +274,13 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                     }}
                     value={saCustomerName}
                     onChange={e => setSaCustomerName(e.target.value)}
-                    placeholder="Masukkan nama pemilik / STNK..."
+                    placeholder="Contoh: Budi Santoso"
                     required
                   />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
-                    Nama Pengemudi / Pembawa Kendaraan
+                    Nama Pengemudi / Pembawa
                   </label>
                   <input
                     style={{
@@ -282,7 +296,7 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                     }}
                     value={saDriverName}
                     onChange={e => setSaDriverName(e.target.value)}
-                    placeholder="Nama pengemudi (jika berbeda dari pemilik)..."
+                    placeholder="Contoh: Agus (Sopir)"
                   />
                 </div>
               </div>
@@ -290,7 +304,7 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
-                    Nomor Telepon / WhatsApp (Wajib)
+                    Nomor Telepon / WA
                   </label>
                   <input
                     style={{
@@ -421,28 +435,7 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
-                    Job Type / Paket Servis
-                  </label>
-                  <input
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      fontSize: '0.875rem',
-                      color: '#0f172a',
-                      fontWeight: 500,
-                      boxSizing: 'border-box',
-                      outline: 'none',
-                    }}
-                    value={saJobType}
-                    onChange={e => setSaJobType(e.target.value)}
-                    placeholder="Contoh: PAKET 10.000 KM"
-                  />
-                </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
                     Stall Bengkel
@@ -519,9 +512,10 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                   backgroundColor: '#0f172a',
                   color: '#ffffff',
                   padding: '0.75rem',
-                  fontSize: '0.9rem',
                   fontWeight: 'bold',
+                  fontSize: '0.9rem',
                   borderRadius: '6px',
+                  border: 'none',
                   cursor: 'pointer',
                 }}
               >
@@ -532,7 +526,7 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
         </div>
       )}
 
-      {/* Step 2: Vehicle & SDMS Booking Data Confirmation */}
+      {/* Step 2: Service Type Selection & Customer Complaints */}
       {wabStep === 2 && (
         <div style={{ width: '100%' }}>
           <div style={{
@@ -542,121 +536,123 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
             border: '1px solid #cbd5e1',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
           }}>
-            <h4 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
-              Step 2: Konfirmasi Data Kendaraan &amp; Antrian
-            </h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', marginBottom: '1.75rem' }}>
-              {/* Data Pelanggan */}
-              <div>
-                <h5 style={{ margin: '0 0 0.85rem 0', color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem' }}>
-                  DATA PELANGGAN &amp; IDENTITAS
-                </h5>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem 1.25rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>NAMA PEMILIK / STNK</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', marginTop: '3px' }}>{saCustomerName || selectedTicket.customerName || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>NAMA PENGEMUDI</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', marginTop: '3px' }}>{saDriverName || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>NO. TELEPON / WA</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', marginTop: '3px' }}>{saCustomerPhone || selectedTicket.telponNo || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>EMAIL PELANGGAN</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b', marginTop: '3px' }}>{saCustomerEmail || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>NO. KTP / IDENTITAS</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b', marginTop: '3px' }}>{saIdentityNo || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>ALAMAT DOMISILI</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b', marginTop: '3px' }}>{saCustomerAddress || '-'}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Data Kendaraan */}
-              <div>
-                <h5 style={{ margin: '0 0 0.85rem 0', color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem' }}>
-                  DATA KENDARAAN &amp; SDMS BOOKING
-                </h5>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem 1.25rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>NO. BOOKING SDMS</div>
-                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace', marginTop: '3px' }}>{bookingNo}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>NOMOR POLISI</div>
-                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', marginTop: '3px' }}>{saPoliceRegNo || policeRegNo}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>MODEL KENDARAAN</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b', marginTop: '3px' }}>{saVehicleModel || vehicleModel}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>ODOMETER SAAT INI</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', marginTop: '3px' }}>
-                      {saOdometer ? `${Number(saOdometer).toLocaleString('id-ID')} KM` : odometerDisplay}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>JOB TYPE / PAKET SERVIS</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', marginTop: '3px' }}>{saJobType || jobType}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>JADWAL RESERVASI</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b', marginTop: '3px' }}>
-                      {reservasiDate ? `${reservasiDate.substring(0, 10)} (${reservasiTime || '09:30'})` : '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>STALL BENGKEL</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', marginTop: '3px' }}>{saStallCode || stallCode}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>SERVICE ADVISOR ID</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b', marginTop: '3px' }}>{saServiceAdvisor || serviceAdvisorId}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setWabStep(1)}>
-                Kembali
-              </button>
-              <button className="btn" style={{ flex: 2, backgroundColor: '#0f172a', color: '#ffffff', padding: '0.75rem', fontWeight: 'bold' }} onClick={() => setWabStep(3)}>
-                Selanjutnya
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Customer Complaints */}
-      {wabStep === 3 && (
-        <div style={{ width: '100%' }}>
-          <div style={{
-            background: '#ffffff',
-            padding: '1.75rem 2rem',
-            borderRadius: '12px',
-            border: '1px solid #cbd5e1',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
-          }}>
             <h4 style={{ margin: '0 0 1.25rem 0', color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
-              Step 3: Keluhan Pelanggan &amp; Catatan Servis
+              Step 2: Pilihan Jenis Paket Servis &amp; Keluhan Customer
             </h4>
+
+            <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
+                Pilih Jenis Paket Servis
+              </label>
+
+              <div
+                onClick={() => setIsDropdownOpen(prev => !prev)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  border: isDropdownOpen ? '1.5px solid #0054a6' : '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  backgroundColor: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  boxShadow: isDropdownOpen ? '0 0 0 3px rgba(0, 84, 166, 0.12)' : '0 1px 2px rgba(0, 0, 0, 0.03)',
+                  transition: 'all 0.15s ease',
+                  userSelect: 'none',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <span style={{ fontSize: '0.875rem', fontWeight: saJobType ? 600 : 400, color: saJobType ? '#0f172a' : '#94a3b8' }}>
+                  {saJobType || '-- Pilih Jenis Paket Servis --'}
+                </span>
+                <ChevronDown size={18} color="#64748b" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+              </div>
+
+              {isDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '105%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 12px 30px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.05)',
+                  zIndex: 30,
+                  maxHeight: '205px',
+                  overflowY: 'auto',
+                  padding: '0.35rem'
+                }}>
+                  {SERVICE_OPTIONS.map((opt) => {
+                    const isSelected = saJobType === opt.value;
+                    return (
+                      <div
+                        key={opt.value}
+                        onClick={() => {
+                          setSaJobType(opt.value);
+                          setIsDropdownOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justify: 'space-between',
+                          padding: '0.65rem 0.85rem',
+                          borderRadius: '6px',
+                          backgroundColor: isSelected ? '#eff6ff' : 'transparent',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease-in-out',
+                          marginBottom: '2px'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.backgroundColor = '#f1f5f9';
+                            e.currentTarget.style.transform = 'translateX(3px)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.transform = 'translateX(0px)';
+                          }
+                        }}
+                      >
+                        <span style={{ fontSize: '0.85rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? '#0054a6' : '#0f172a', transition: 'color 0.15s ease' }}>
+                          {opt.label}
+                        </span>
+                        {isSelected && <Check size={16} color="#0054a6" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {saJobType === 'Custom Service Request' && (
+                <input
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.85rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    color: '#0f172a',
+                    fontWeight: 500,
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                    marginTop: '0.75rem'
+                  }}
+                  onChange={e => setSaJobType(e.target.value)}
+                  placeholder="Ketik jenis servis khusus..."
+                />
+              )}
+            </div>
+
             <div style={{ marginBottom: '1.75rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
                 Keluhan / Permintaan Khusus Pelanggan
               </label>
               <textarea
-                rows={5}
+                rows={4}
                 style={{
                   width: '100%',
                   padding: '0.85rem',
@@ -674,6 +670,209 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                 placeholder="Tuliskan detail keluhan pelanggan atau catatan khusus teknisi..."
               />
             </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setWabStep(1)}>
+                Kembali
+              </button>
+              <button className="btn" style={{ flex: 2, backgroundColor: '#0f172a', color: '#ffffff', padding: '0.75rem', fontWeight: 'bold' }} onClick={() => setWabStep(3)}>
+                Selanjutnya
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Functional Inspection Checklist */}
+      {wabStep === 3 && (
+        <div style={{ width: '100%' }}>
+          <div style={{
+            background: '#ffffff',
+            padding: '1.75rem 2rem',
+            borderRadius: '12px',
+            border: '1px solid #cbd5e1',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
+          }}>
+            {/* Header & Live Summary Pills */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h4 style={{ margin: '0 0 0.35rem 0', color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
+                  Step 3: Inspeksi Komponen &amp; Fungsional
+                </h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.775rem' }}>
+                  <span style={{ background: '#f1f5f9', color: '#475569', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 600 }}>
+                    {functionalInspections.length} Komponen
+                  </span>
+                  <span style={{ background: '#ecfdf5', color: '#047857', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700 }}>
+                    ✓ {functionalInspections.filter(i => i.status === 'OK').length} Baik
+                  </span>
+                  {functionalInspections.filter(i => i.status === 'Perlu Cek').length > 0 && (
+                    <span style={{ background: '#fffbeb', color: '#b45309', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700 }}>
+                      ⚠ {functionalInspections.filter(i => i.status === 'Perlu Cek').length} Cek
+                    </span>
+                  )}
+                  {functionalInspections.filter(i => i.status === 'Rusak' || i.status === 'Defect').length > 0 && (
+                    <span style={{ background: '#fef2f2', color: '#be123c', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700 }}>
+                      ✖ {functionalInspections.filter(i => i.status === 'Rusak' || i.status === 'Defect').length} Rusak
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {handleMarkAllFunctionalOk && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllFunctionalOk}
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: '#0f172a',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.borderColor = '#94a3b8'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                >
+                  <CheckCheck size={15} color="#15803d" />
+                  <span>Tandai Semua Baik (OK)</span>
+                </button>
+              )}
+            </div>
+
+            {/* 2-Column Responsive Card Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.75rem' }}>
+              {functionalInspections.map((item, idx) => {
+                const isOk = item.status === 'OK';
+                const isCheck = item.status === 'Perlu Cek';
+                const isDefect = item.status === 'Rusak' || item.status === 'Defect';
+
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      background: '#ffffff',
+                      padding: '1rem 1.15rem',
+                      borderRadius: '10px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#f1f5f9', color: '#64748b', fontSize: '0.72rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {idx + 1}
+                        </span>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0f172a' }}>{item.name}</span>
+                      </div>
+
+                      {/* 1-Tap Segmented Control */}
+                      <div style={{ display: 'flex', gap: '0.35rem', background: '#f8fafc', padding: '3px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleFunctionalChange(item.id, 'status', 'OK')}
+                          style={{
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: isOk ? '#10b981' : 'transparent',
+                            color: isOk ? '#ffffff' : '#64748b',
+                            fontSize: '0.75rem',
+                            fontWeight: isOk ? 700 : 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <CheckCircle2 size={13} color={isOk ? '#ffffff' : '#94a3b8'} />
+                          <span>Baik</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleFunctionalChange(item.id, 'status', 'Perlu Cek')}
+                          style={{
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: isCheck ? '#f59e0b' : 'transparent',
+                            color: isCheck ? '#ffffff' : '#64748b',
+                            fontSize: '0.75rem',
+                            fontWeight: isCheck ? 700 : 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <AlertTriangle size={13} color={isCheck ? '#ffffff' : '#94a3b8'} />
+                          <span>Cek</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleFunctionalChange(item.id, 'status', 'Rusak')}
+                          style={{
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: isDefect ? '#ef4444' : 'transparent',
+                            color: isDefect ? '#ffffff' : '#64748b',
+                            fontSize: '0.75rem',
+                            fontWeight: isDefect ? 700 : 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <XCircle size={13} color={isDefect ? '#ffffff' : '#94a3b8'} />
+                          <span>Rusak</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Inline Optional Note Field */}
+                    <input
+                      type="text"
+                      placeholder="Catatan komponen (opsional)..."
+                      value={item.notes || ''}
+                      onChange={e => handleFunctionalChange(item.id, 'notes', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '0.775rem',
+                        color: '#0f172a',
+                        backgroundColor: '#ffffff',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.15s ease'
+                      }}
+                      onFocus={e => e.currentTarget.style.borderColor = '#0054a6'}
+                      onBlur={e => e.currentTarget.style.borderColor = '#e2e8f0'}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Nav Buttons */}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setWabStep(2)}>
                 Kembali
@@ -735,49 +934,6 @@ export default function FormWAB({ getPurposeString, setActiveTab, showToast, han
                   <span style={{ fontWeight: 700, color: '#0f172a' }}>[{n.category}]:</span>
                   <span style={{ color: '#475569' }}>{n.note || '-'}</span>
                   <button style={{ color: '#be123c', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold', marginLeft: 4 }} onClick={() => handleRemoveTextNote(n.id)}>&times;</button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h5 style={{ margin: 0, color: '#0f172a', fontSize: '0.9rem', fontWeight: 700 }}>Pemeriksaan Komponen &amp; Fungsi</h5>
-              {handleMarkAllFunctionalOk && (
-                <button
-                  type="button"
-                  onClick={handleMarkAllFunctionalOk}
-                  style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.775rem', fontWeight: 700, color: '#0f172a', cursor: 'pointer' }}
-                >
-                  ✓ Tandai Semua OK
-                </button>
-              )}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              {functionalInspections.map(item => (
-                <div key={item.id} style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.825rem', fontWeight: 600, color: '#334155' }}>{item.name}</span>
-                  <div style={{ display: 'flex', gap: '0.35rem' }}>
-                    {['OK', 'Perlu Cek', 'Rusak'].map(st => (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => handleFunctionalChange(item.id, 'status', st)}
-                        style={{
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '4px',
-                          border: item.status === st ? '1px solid #0f172a' : '1px solid #cbd5e1',
-                          background: item.status === st ? '#0f172a' : '#ffffff',
-                          color: item.status === st ? '#ffffff' : '#64748b',
-                          fontSize: '0.75rem',
-                          fontWeight: item.status === st ? 700 : 500,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {st}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               ))}
             </div>

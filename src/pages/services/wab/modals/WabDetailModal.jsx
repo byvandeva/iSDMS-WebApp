@@ -33,18 +33,18 @@ export default function WabDetailModal({ isOpen, ticket, onClose }) {
   if (!isOpen || !ticket) return null;
 
   const damages = ticket.damages || ticket.wabDamages || [];
-  const functionalInspections = ticket.functionalInspections || [];
+  const functionalInspections = ticket.functionalInspections || ticket.wabInspections || [];
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3900, padding: '1.25rem' }}>
-      <div style={{ background: '#ffffff', borderRadius: '10px', width: '100%', maxWidth: '700px', height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+      <div style={{ background: '#ffffff', borderRadius: '10px', width: '100%', maxWidth: '700px', height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Detail Form WAB</h3>
             <span style={{ fontSize: '0.775rem', color: '#64748b', display: 'block', marginTop: '2px' }}>
-              {ticket.vehicleModel || ticket.groupCode || '-'} &bull; Antrian: <b style={{ color: '#0f172a' }}>{ticket.queueNumber || 'Non-Service'}</b>
+              {ticket.vehicleModel || ticket.groupCode || ticket.saVehicleModel || '-'} &bull; Antrian: <b style={{ color: '#0f172a' }}>{ticket.queueNumber || 'Non-Service'}</b>
             </span>
           </div>
           <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', color: '#64748b' }}>
@@ -57,16 +57,20 @@ export default function WabDetailModal({ isOpen, ticket, onClose }) {
 
           <Divider label="Pelanggan & Kendaraan" />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-            <Field label="Nama Pelanggan" value={ticket.customerName || ticket.wabCustomerName} />
-            <Field label="Nomor Telepon" value={ticket.customerPhone || ticket.telponNo || ticket.wabCustomerPhone} />
-            <Field label="Nomor Polisi" value={(ticket.licensePlate || ticket.policeRegNo || '').toUpperCase()} />
-            <Field label="Model Kendaraan" value={ticket.vehicleModel || ticket.groupCode} />
-            <Field label="Jenis Servis" value={ticket.serviceType || ticket.jobType} />
-            <Field label="Odometer" value={ticket.odometer ? `${ticket.odometer} km` : undefined} />
+            <Field label="Nama Pelanggan" value={ticket.customerName || ticket.wabCustomerName || ticket.saCustomerName} />
+            <Field label="Nama Pengemudi" value={ticket.driverName || ticket.saDriverName} />
+            <Field label="Nomor Telepon / WA" value={ticket.customerPhone || ticket.telponNo || ticket.wabCustomerPhone || ticket.saCustomerPhone} />
+            <Field label="Email Pelanggan" value={ticket.customerEmail || ticket.saCustomerEmail} />
+            <Field label="No. KTP / Identitas" value={ticket.identityNo || ticket.saIdentityNo} />
+            <Field label="Nomor Polisi" value={(ticket.licensePlate || ticket.policeRegNo || ticket.saPoliceRegNo || '').toUpperCase()} />
+            <Field label="Model Kendaraan" value={ticket.vehicleModel || ticket.groupCode || ticket.saVehicleModel} />
+            <Field label="Odometer" value={ticket.odometer || ticket.saOdometer ? `${ticket.odometer || ticket.saOdometer} km` : undefined} />
+            <Field label="Jenis Servis" value={ticket.serviceType || ticket.jobType || ticket.wabServiceType} />
             <Field label="Stall" value={ticket.stallCode || ticket.stallName} />
             <Field label="Service Advisor" value={ticket.serviceAdvisor} />
+            <Field label="Nomor Antrian" value={ticket.queueNumber || 'Non-Service'} />
             {(ticket.customerAddress || ticket.saCustomerAddress) && (
-              <Field label="Alamat" value={ticket.customerAddress || ticket.saCustomerAddress} span={2} />
+              <Field label="Alamat Domisili" value={ticket.customerAddress || ticket.saCustomerAddress} span={2} />
             )}
           </div>
 
@@ -82,7 +86,7 @@ export default function WabDetailModal({ isOpen, ticket, onClose }) {
                 {functionalInspections.map((item) => (
                   <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0', borderBottom: '1px solid #f1f5f9', fontSize: '0.8rem' }}>
                     <span style={{ color: '#334155' }}>{item.name}</span>
-                    <span style={{ fontWeight: 700, color: item.status === 'OK' ? '#16a34a' : item.status === 'Tidak OK' ? '#be123c' : '#d97706', fontSize: '0.75rem' }}>{item.status}</span>
+                    <span style={{ fontWeight: 700, color: item.status === 'OK' || item.status === '✓ Baik' ? '#16a34a' : '#be123c', fontSize: '0.75rem' }}>{item.status}</span>
                   </div>
                 ))}
               </div>

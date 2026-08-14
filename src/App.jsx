@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { User, LogOut, ChevronDown } from 'lucide-react';
+import { User, LogOut, ChevronDown, Globe } from 'lucide-react';
 
 import { AuthProvider, useAuth } from './utility/hooks/useAuth';
 import { AppDataProvider, useAppData } from './utility/context/AppDataContext';
@@ -129,14 +129,6 @@ function AppShell() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <button
-                type="button" onClick={cycleLanguage}
-                title={language === 'id' ? 'Bahasa Indonesia (Klik untuk beralih)' : language === 'en' ? 'English (Click to switch)' : '日本語 (クリックして切替)'}
-                style={{ width: '34px', height: '34px', borderRadius: '50%', border: '1px solid #ffffffff', background: '#ffffff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s ease', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)' }}
-              >
-                <span>{language === 'id' ? '🇮🇩' : language === 'en' ? '🇬🇧' : '🇯🇵'}</span>
-              </button>
-
               <div style={{ position: 'relative' }}>
                 <div
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}

@@ -28,9 +28,42 @@ const ROLE_INITIALS = {
 };
 
 const LANGUAGES = [
-  { code: 'id', flag: '🇮🇩', label: 'ID' },
-  { code: 'en', flag: '🇬🇧', label: 'EN' },
-  { code: 'ja', flag: '🇯🇵', label: 'JA (日本語)' },
+  {
+    code: 'id',
+    label: 'Indonesia (ID)',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 32 32" style={{ borderRadius: '50%', objectFit: 'cover' }}>
+        <path fill="#e70011" d="M0 0h32v16H0z"/>
+        <path fill="#ffffff" d="M0 16h32v16H0z"/>
+      </svg>
+    )
+  },
+  {
+    code: 'en',
+    label: 'English (EN)',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 60 30" style={{ borderRadius: '50%', objectFit: 'cover' }}>
+        <clipPath id="uk-flag-acc"><path d="M0 0v30h60V0z"/></clipPath>
+        <g clipPath="url(#uk-flag-acc)">
+          <path fill="#012169" d="M0 0v30h60V0z"/>
+          <path stroke="#fff" strokeWidth="6" d="M0 0l60 30M60 0L0 30"/>
+          <path stroke="#C8102E" strokeWidth="4" d="M0 0l60 30M60 0L0 30"/>
+          <path stroke="#fff" strokeWidth="10" d="M30 0v30M0 15h60"/>
+          <path stroke="#C8102E" strokeWidth="6" d="M30 0v30M0 15h60"/>
+        </g>
+      </svg>
+    )
+  },
+  {
+    code: 'ja',
+    label: '日本語 (JA)',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 900 600" style={{ borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}>
+        <rect width="900" height="600" fill="#ffffff"/>
+        <circle cx="450" cy="300" r="180" fill="#bc002d"/>
+      </svg>
+    )
+  },
 ];
 
 export default function Account({ currentUserRole = 'ServiceAdvisor', onLogout }) {
@@ -98,9 +131,9 @@ export default function Account({ currentUserRole = 'ServiceAdvisor', onLogout }
                 key={item.code}
                 type="button"
                 onClick={() => changeLanguage(item.code)}
-                style={{ flex: 1, padding: '0.65rem 0.4rem', borderRadius: '8px', border: language === item.code ? '2px solid #0f172a' : '1px solid #cbd5e1', background: language === item.code ? '#0f172a' : '#ffffff', color: language === item.code ? '#ffffff' : '#334155', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+                style={{ flex: 1, padding: '0.65rem 0.6rem', borderRadius: '8px', border: language === item.code ? '2px solid #0054a6' : '1px solid #cbd5e1', background: language === item.code ? '#eff6ff' : '#ffffff', color: language === item.code ? '#0054a6' : '#334155', fontWeight: 700, fontSize: '0.825rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'all 0.15s ease' }}
               >
-                <span>{item.flag}</span>
+                {item.icon}
                 <span>{item.label}</span>
               </button>
             ))}
@@ -154,11 +187,7 @@ export default function Account({ currentUserRole = 'ServiceAdvisor', onLogout }
         </div>
 
         {onLogout && (
-          <div style={{ background: '#ffffff', padding: '1.25rem 1.75rem', borderRadius: '12px', border: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0f172a', display: 'block' }}>Keluar dari Sesi Portal SDMS</span>
-              <span style={{ fontSize: '0.775rem', color: '#64748b' }}>Gunakan tombol ini untuk mengakhiri sesi dan keluar dari sistem secara aman.</span>
-            </div>
+          <div style={{ background: '#ffffff', padding: '1.25rem 1.75rem', borderRadius: '12px', border: '1px solid #cbd5e1', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <button type="button" className="btn" onClick={onLogout} style={{ backgroundColor: '#be123c', color: '#ffffff', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
               <LogOut size={15} />
               <span>Logout</span>

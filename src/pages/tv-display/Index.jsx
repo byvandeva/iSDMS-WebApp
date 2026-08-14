@@ -61,6 +61,34 @@ export default function TvDisplayPage({ tickets: parentTickets = [] }) {
   };
 
   useEffect(() => {
+    const loadStoredTickets = () => {
+      try {
+        const stored = localStorage.getItem('sdms_wab_tickets');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTickets(parsed);
+          }
+        }
+      } catch (e) {}
+    };
+
+    loadStoredTickets();
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'sdms_wab_tickets' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTickets(parsed);
+          }
+        } catch (err) {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    const backupTimer = setInterval(loadStoredTickets, 1500);
+
     fetchTickets().then(data => {
       if (Array.isArray(data) && data.length > 0) {
         setTickets(data);
@@ -78,7 +106,12 @@ export default function TvDisplayPage({ tickets: parentTickets = [] }) {
     connection.on('ticketCompleted', applyTicketUpdate);
 
     connection.start().catch(console.error);
-    return () => connection.stop();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(backupTimer);
+      connection.stop();
+    };
   }, []);
 
   const displayTickets = (tickets && tickets.length > 0) ? tickets : parentTickets;

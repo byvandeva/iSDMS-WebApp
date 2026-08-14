@@ -62,6 +62,14 @@ export function AppDataProvider({ children, onCheckIn }) {
     }
   }, [loadData, showToast, onCheckIn]);
 
+  useEffect(() => {
+    if (Array.isArray(tickets) && tickets.length > 0) {
+      try {
+        localStorage.setItem('sdms_wab_tickets', JSON.stringify(tickets));
+      } catch (e) {}
+    }
+  }, [tickets]);
+
   return (
     <AppDataContext.Provider value={{
       bookings, setBookings,
