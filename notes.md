@@ -27,3 +27,5 @@ Jika mau ubah URL API, copy `.env.example` ke `.env`:
 cp .env.example .env
 ```
 Isi `VITE_SDMS_API_URL=http://localhost:5000/api`
+
+Test
